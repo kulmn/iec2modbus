@@ -65,6 +65,24 @@ typedef struct  {
 } cfg_iec_func;
 
 
+typedef enum
+{
+	iec_priority = 0,
+	iec_byteswap,
+	iec_on_value,
+	iec_off_value
+} iec_set_params_flags;
+
+
+typedef struct  {
+	uint32_t				set_params;
+	uint32_t				on_value;
+	uint32_t				off_value;
+	cfg_iec_prior		priority;
+	cfg_byte_swap		byte_swap;
+} iec_add_params;
+
+
 typedef enum  {
 	mem_init =0,
 	mem_cur,
@@ -93,12 +111,14 @@ typedef struct  {
 	uint8_t				mb_func;
 	uint16_t				mb_data_addr;
 	uint16_t				mb_data_size;
-	cfg_iec_prior		iec_priority;
+
 	TypeID				iec_func;
 	uint16_t				iec_ioa_addr;
 	uint8_t				iec_size;
-	cfg_byte_swap		byte_swap;
 
+//	iec_add_params		add_params;
+	cfg_byte_swap		byte_swap;
+	cfg_iec_prior		iec_priority;
 	uint8_t				on_off_flag;
 	uint16_t				on_off_data;
 
