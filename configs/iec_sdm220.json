@@ -1,0 +1,24 @@
+{
+	"commands": [
+		{
+			"Name":"voltage_v",
+			"read": ["M_ME_NC_1", "0x0010", 0]
+		},
+		{
+			"Name":"voltage_v",
+			"read": ["M_ME_NC_1", "0x0020", 0]
+		},
+		{
+			"Name":"voltage_v",
+			"read": ["M_ME_NC_1", "0x0030",0]
+		},
+		{
+			"Name":"voltage_v",
+			"read": ["M_ME_NC_1", "0x0040", 0]
+		},
+		{	"Name":"voltage_2",
+			"write": ["C_SC_NA_1", "0x0040"],
+			"add_param":["ON=1","OFF=2","priority=hight","byteswap=dcba"]
+		}
+	]
+}

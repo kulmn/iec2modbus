@@ -1,0 +1,33 @@
+{	"log_level": "debug",				// debug, info, warning, error
+	"iec104_send_rate_s": 30,
+	"serial_ports": [
+		{
+			"device": ["/dev/ttyUSB0",9600,8,"N",1],
+			"mb_answer_timeout_ms": 300,
+			"mb_slave": [
+				{
+					"mb_slave_address": 1,
+					"mb_slave_config_file": "configs/sdm220.json"
+				},
+				{
+					"mb_slave_address": 2,
+					"mb_slave_config_file": "configs/sdm220.json"
+				}
+			]
+		},
+		{
+			"device": ["/dev/ttyS0",9600,8,"N",1],
+			"mb_polling_rate_s": 10,
+			"mb_slave": [
+				{
+					"mb_slave_address": 3,
+					"mb_slave_config_file": "configs/sdm220.json"
+				},
+				{
+					"mb_slave_address": 4,
+					"mb_slave_config_file": "configs/sdm220.json"
+				}
+			]
+		}
+	]
+}

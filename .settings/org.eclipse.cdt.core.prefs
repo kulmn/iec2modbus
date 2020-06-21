@@ -1,0 +1,11 @@
+doxygen/doxygen_new_line_after_brief=true
+doxygen/doxygen_use_brief_tag=false
+doxygen/doxygen_use_javadoc_tags=true
+doxygen/doxygen_use_pre_tag=false
+doxygen/doxygen_use_structural_commands=false
+eclipse.preferences.version=1
+environment/project/cdt.managedbuild.config.gnu.exe.release.512806702.1062300087.1674847163.1191210545/STAGING_DIR/delimiter=\:
+environment/project/cdt.managedbuild.config.gnu.exe.release.512806702.1062300087.1674847163.1191210545/STAGING_DIR/operation=replace
+environment/project/cdt.managedbuild.config.gnu.exe.release.512806702.1062300087.1674847163.1191210545/STAGING_DIR/value=/opt/toolchain-arm_xscale_gcc-4.8-linaro_uClibc-0.9.33.2_eabi/
+environment/project/cdt.managedbuild.config.gnu.exe.release.512806702.1062300087.1674847163.1191210545/append=true
+environment/project/cdt.managedbuild.config.gnu.exe.release.512806702.1062300087.1674847163.1191210545/appendContributed=true

@@ -1,0 +1,13 @@
+/Debug/
+/Release/
+/arm/
+/arm_v6/
+/arm_v7/
+/x86_64/
+/rasperberry_pi/
+/orange_pi/
+/logs/
+/moxa_uc8410/
+/moxa_ia240/
+/irz_router/
+/irz_ru41w/
