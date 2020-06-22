@@ -155,6 +155,7 @@ int parse_iec_add_params(struct json_object *add_parm_json, Command_TypeDef *cmd
 			{
 				if ( !strcmp(value, "hight") )  cmd->add_params.priority = cfg_prior_hight;
 				else cmd->add_params.priority = cfg_prior_low;
+				cmd->add_params.set_params |= (1 << iec_priority);
 			}
 			else if ( !strcmp(param, "byteswap") )
 			{
@@ -162,14 +163,17 @@ int parse_iec_add_params(struct json_object *add_parm_json, Command_TypeDef *cmd
 				else if ( !strcmp(value, "badc") ) cmd->add_params.byte_swap = cfg_btsw_badc;
 				else if ( !strcmp(value, "cdab") ) cmd->add_params.byte_swap = cfg_btsw_cdab;
 				else {} //use default
+				cmd->add_params.set_params |= (1 << iec_byteswap);
 			}
 			else if ( !strcmp(param, "ON") )
 			{
 				cmd->add_params.on_value  = strtol(value, NULL, 0);
+				cmd->add_params.set_params |= (1 << iec_on_value);
 			}
 			else if ( !strcmp(param, "OFF") )
 			{
 				cmd->add_params.off_value  = strtol(value, NULL, 0);
+				cmd->add_params.set_params |= (1 << iec_off_value);
 			}
 			else
 			{
