@@ -151,8 +151,6 @@ int parse_iec_add_params(struct json_object *add_parm_json, Command_TypeDef *cmd
 		if (param != NULL)
 		{
 			char *value = strtok(NULL, "=");
-			printf( " param = %s, value = %s\n", param, value );
-
 			if ( !strcmp(param, "priority") )
 			{
 				if ( !strcmp(value, "hight") )  cmd->add_params.priority = cfg_prior_hight;
@@ -210,8 +208,6 @@ bool parse_read_command(struct json_object *cur_cmd, Command_TypeDef *read_cmd )
 	// parse modbus data size
 	tmp_json = json_object_array_get_idx(mb_data_json, cfg_mb_size);
 	read_cmd->mb_data_size = json_object_get_int(tmp_json);
-
-
 
 	json_object_object_get_ex(cur_cmd, "iec104_data", &iec_data_json );
 	// parse iec104 function code
@@ -275,10 +271,6 @@ int parse_write_command(struct json_object *cur_cmd, Command_TypeDef *write_cmd 
 	tmp_json = json_object_array_get_idx(mb_data_json, cfg_mb_address);
 	str = json_object_get_string(tmp_json);
 	write_cmd->mb_data_addr = strtol(str, NULL, 0);
-
-	// parse modbus data size
-//	tmp_json = json_object_array_get_idx(mb_data_json, cfg_mb_size);
-//	write_cmd->mb_data_size = json_object_get_int(tmp_json);
 
 	json_object_object_get_ex(cur_cmd, "iec104_data", &iec_data_json );
 	// parse iec104 function code

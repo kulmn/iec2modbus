@@ -95,18 +95,11 @@ typedef enum  {
 	mem_err
 } data_state;
 
-
-
-
 typedef struct  {
-
-
 	uint8_t				mem_size;
 	data_state			mem_state;
 	uint8_t				*mem_ptr;
-
 }Value_mem;
-
 
 typedef struct  {
 	uint8_t				mb_func;
@@ -118,10 +111,6 @@ typedef struct  {
 	uint8_t				iec_size;
 
 	iec_add_params		add_params;
-//	cfg_byte_swap		byte_swap;
-//	cfg_iec_prior		iec_priority;
-//	uint8_t				on_off_flag;
-//	uint16_t				on_off_data;
 
 	uint8_t				mem_size;
 	uint8_t				*mem_ptr;

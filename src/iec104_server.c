@@ -1,9 +1,8 @@
+
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
-
-
 
 #include "iec104_server.h"
 #include <byteswap.h>
@@ -12,7 +11,6 @@
 #include <sys/time.h>
 #include <time.h>
 #include "libmodbus/modbus.h"
-
 
 
 
@@ -415,23 +413,6 @@ static Command_TypeDef* find_iec_cmd(Transl_Config_TypeDef *config, InformationO
 }
 
 
-/*************************************************************************************
-static bool clockSyncHandler(void *parameter, IMasterConnection connection, CS101_ASDU asdu, CP56Time2a newTime)
-{
-	slog_info("Process time sync command with time %02i:%02i:%02i %02i/%02i/%04i ",
-			CP56Time2a_getHour(newTime ), CP56Time2a_getMinute(newTime ),
-			CP56Time2a_getSecond(newTime ), CP56Time2a_getDayOfMonth(newTime ),
-			CP56Time2a_getMonth(newTime ), CP56Time2a_getYear(newTime ) + 2000 );
-
-	// Set time for ACT_CON message
-	CP56Time2a_setFromMsTimestamp(newTime, Hal_getTimeInMs() );
-	// update system time here
-//	if( iec104_set_system_time( newTime) != 0 ) return false;
-
-	return true;
-}
-*/
-
 /*************************************************************************************/
 static bool iec104_set_time(IMasterConnection connection, CS101_ASDU asdu)
 {
@@ -492,8 +473,6 @@ static bool interrogationHandler(void *parameter, IMasterConnection connection, 
 
 	return true;
 }
-
-
 
 
 
