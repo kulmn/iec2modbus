@@ -76,6 +76,53 @@ const cfg_iec_func iec_write_fn_str[] = {
 	return true;
 }
 
+ bool allocate_write_cmd_memory(Command_TypeDef *cmd)
+ {
+		uint8_t size_in_bytes = 0;
+		switch (cmd->iec_func)
+		{
+			case C_SC_NA_1:			// Single command
+//					case C_SC_TA_1:			// Single command with CP56Time2a
+			case C_DC_NA_1: 			// Double command
+//					case C_DC_TA_1: 			// Double command with CP56Time2a
+//					case C_RC_NA_1:			// Regulating step command
+//					case C_RC_TA_1:			// Regulating step command with CP56Time2a
+			case C_SE_NA_1: 			// Setpoint command, normalized value
+//					case C_SE_TA_1: 			// Setpoint command, normalized value with CP56Time2a
+			case C_SE_NB_1: 			// Setpoint command, scaled value
+//					case C_SE_TB_1: 			// Setpoint command, scaled value with CP56Time2a
+			{
+				size_in_bytes = sizeof(uint16_t);
+				cmd->mb_data_size = 1;
+			}break;
+			case C_SE_NC_1: // Setpoint command, short floating point value
+//					case C_SE_TC_1: // Setpoint command, short floating point value with CP56Time2a
+			case C_BO_NA_1: // Bit string 32 bit
+//					case C_BO_TA_1: // Bit string 32 bit with CP56Time2a
+			{
+				size_in_bytes = sizeof(uint32_t);
+				cmd->mb_data_size = 2;
+			}break;
+			default:
+			{
+				slog_error("Unsupported ASDU type id #:%d ", cmd->iec_func);
+				return false;
+			}
+		}
+		cmd->value.mem_ptr = (uint8_t*) malloc(size_in_bytes );
+		if (cmd->value.mem_ptr == NULL)
+		{
+			slog_error("Unable to allocate %d bytes ",size_in_bytes);
+			return false;
+		}
+		memset(cmd->value.mem_ptr, 0, size_in_bytes );
+
+		cmd->value.mem_size = size_in_bytes;
+		cmd->value.mem_state = mem_init;
+
+	 return true;
+ }
+
 
 bool read_json_file(const char *filename, struct json_object **parsed_json)
 {
@@ -303,6 +350,9 @@ int parse_write_command(struct json_object *cur_cmd, Command_TypeDef *write_cmd 
 	{
 		parse_iec_add_params( add_parm_json , write_cmd );
 	}
+
+	// Allocate and initialize the memory to store the registers
+	if (! allocate_write_cmd_memory(write_cmd)) return false;
 
 	return true;
 }

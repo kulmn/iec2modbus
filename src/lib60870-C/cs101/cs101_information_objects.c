@@ -3939,7 +3939,6 @@ SingleCommand
 SingleCommand_getFromBuffer(SingleCommand self, CS101_AppLayerParameters parameters,
         uint8_t* msg, int msgSize, int startIndex)
 {
-    printf("msgSize=%d, sizeOfIOA = %d",msgSize,parameters->sizeOfIOA);
     if ((msgSize - startIndex) < (parameters->sizeOfIOA + 1))
         return NULL;
 

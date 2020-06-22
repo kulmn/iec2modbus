@@ -108,6 +108,24 @@ typedef struct  {
 	uint8_t				*mem_ptr;
 }data_mem;
 
+
+typedef struct  {
+	TypeID				iec_func;
+	uint16_t				iec_ioa_addr;
+	uint8_t				iec_size;
+	iec_add_params		add_params;
+	data_mem			*value;
+} iec104_command;
+
+typedef struct  {
+	uint8_t				mb_func;
+	uint16_t				mb_data_addr;
+	uint16_t				mb_data_size;
+	iec_add_params		add_params;
+	data_mem			*value;
+}modbus_command;
+
+
 typedef struct  {
 	uint8_t				mb_func;
 	uint16_t				mb_data_addr;

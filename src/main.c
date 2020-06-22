@@ -10,113 +10,6 @@ static bool running = true;
 
 
 
-/* Allocate and initialize the memory to store the registers */
-int allocate_write_cmd_memory(Transl_Config_TypeDef *conf)
-{
-	for (int i = 0; i < conf->num_ports; i++)	// Serial ports num
-	{
-		for (int j = 0; j < conf->serialport[i].num_slaves; j++)// Modbus slaves num
-		{
-			for (int x = 0; x < conf->serialport[i].mb_slave[j].write_cmnds_num; x++) // Modbus slave write commands num
-			{
-				uint8_t size_in_bytes = 0;
-				switch (conf->serialport[i].mb_slave[j].write_cmnds[x].iec_func)
-				{
-					case C_SC_NA_1:			// Single command
-//					case C_SC_TA_1:			// Single command with CP56Time2a
-					case C_DC_NA_1: 			// Double command
-//					case C_DC_TA_1: 			// Double command with CP56Time2a
-//					case C_RC_NA_1:			// Regulating step command
-//					case C_RC_TA_1:			// Regulating step command with CP56Time2a
-					case C_SE_NA_1: 			// Setpoint command, normalized value
-//					case C_SE_TA_1: 			// Setpoint command, normalized value with CP56Time2a
-					case C_SE_NB_1: 			// Setpoint command, scaled value
-//					case C_SE_TB_1: 			// Setpoint command, scaled value with CP56Time2a
-					{
-						size_in_bytes = sizeof(uint16_t);
-						conf->serialport[i].mb_slave[j].write_cmnds[x].mb_data_size = 1;
-					}break;
-					case C_SE_NC_1: // Setpoint command, short floating point value
-//					case C_SE_TC_1: // Setpoint command, short floating point value with CP56Time2a
-					case C_BO_NA_1: // Bit string 32 bit
-//					case C_BO_TA_1: // Bit string 32 bit with CP56Time2a
-					{
-						size_in_bytes = sizeof(uint32_t);
-						conf->serialport[i].mb_slave[j].write_cmnds[x].mb_data_size = 2;
-					}break;
-					default:
-					{
-						slog_error("Unsupported ASDU type id #:%d in 'serial_ports:%d\\mb_slave:%d\\write_commands:%d\\iec104_data' section", \
-								conf->serialport[i].mb_slave[j].write_cmnds[x].iec_func,i,j,x	);
-						return 1;
-					}
-
-				}
-				conf->serialport[i].mb_slave[j].write_cmnds[x].value.mem_ptr = (uint8_t*) malloc(size_in_bytes );
-				if (conf->serialport[i].mb_slave[j].write_cmnds[x].value.mem_ptr == NULL)
-				{
-					slog_error("Unable to allocate %d bytes in 'serial_ports:%d\\mb_slave:%d\\write_commands:%d' ",size_in_bytes,i,j,x);
-					return 1;
-				}
-				memset(conf->serialport[i].mb_slave[j].write_cmnds[x].value.mem_ptr, 0, size_in_bytes );
-
-				conf->serialport[i].mb_slave[j].write_cmnds[x].value.mem_size = size_in_bytes;
-				conf->serialport[i].mb_slave[j].write_cmnds[x].value.mem_state = mem_init;
-			}
-		}
-	}
-
-	return 0;
-}
-
-
-
-/* Allocate and initialize the memory to store the registers *
-int allocate_read_cmd_memory(Transl_Config_TypeDef *conf)
-{
-	int size_in_bytes = 0;
-
-	for (int i = 0; i < conf->num_ports; i++)							// Serial ports num
-	{
-		for (int j = 0; j < conf->serialport[i].num_slaves; j++)			// Modbus slaves num
-		{
-			for (int x = 0; x < conf->serialport[i].mb_slave[j].read_cmnds_num; x++)		// Modbus slave read commands num
-			{
-				size_in_bytes = 0;
-				switch (conf->serialport[i].mb_slave[j].read_cmnds[x].mb_func)
-				{
-					case MODBUS_FC_READ_COILS:
-					case MODBUS_FC_READ_DISCRETE_INPUTS:
-					{
-						size_in_bytes = (conf->serialport[i].mb_slave[j].read_cmnds[x].mb_data_size >> 3) + 1;
-					}break;
-					case MODBUS_FC_READ_HOLDING_REGISTERS:
-					case MODBUS_FC_READ_INPUT_REGISTERS:
-					{
-						size_in_bytes = (conf->serialport[i].mb_slave[j].read_cmnds[x].mb_data_size * sizeof(uint16_t));
-					}break;
-				}
-				if (size_in_bytes == 0) return 1;
-				conf->serialport[i].mb_slave[j].read_cmnds[x].mem_ptr = (uint8_t*) malloc(size_in_bytes);
-				if (conf->serialport[i].mb_slave[j].read_cmnds[x].mem_ptr == NULL)
-				{
-					slog_error("Unable to allocate %d bytes in 'serial_ports:%d\\mb_slave:%d\\write_commands:%d' ",size_in_bytes,i,j,x);
-					return 1;
-				}
-				memset(conf->serialport[i].mb_slave[j].read_cmnds[x].mem_ptr, 0, size_in_bytes );
-
-				conf->serialport[i].mb_slave[j].read_cmnds[x].mem_size = size_in_bytes;
-				conf->serialport[i].mb_slave[j].read_cmnds[x].mem_state = mem_init;
-			}
-		}
-	}
-
-
-return 0;
-}
-*/
-
-
 void sigint_handler(int signalId)
 {
     running = false;
@@ -163,12 +56,13 @@ int main(int argc, char *argv[])
 		slog_error( "Failed allocate memory for read commands.");
 		exit(EXIT_FAILURE );
 	}
-*/
+
 	if (allocate_write_cmd_memory(config) !=0 )
 	{
 		slog_error( "Failed allocate memory for write commands.");
 		exit(EXIT_FAILURE );
 	}
+*/
 
 
 	// start modbus master
