@@ -7,11 +7,11 @@
 			"mb_slave": [
 				{
 					"mb_slave_address": 1,
-					"mb_slave_config_file": "configs/sdm220.json"
+					"mb_slave_config_file": "configs/sdm220_1.json"
 				},
 				{
 					"mb_slave_address": 2,
-					"mb_slave_config_file": "configs/sdm220.json"
+					"mb_slave_config_file": "configs/sdm220_1.json"
 				}
 			]
 		},
@@ -21,11 +21,11 @@
 			"mb_slave": [
 				{
 					"mb_slave_address": 3,
-					"mb_slave_config_file": "configs/sdm220.json"
+					"mb_slave_config_file": "configs/sdm220_1.json"
 				},
 				{
 					"mb_slave_address": 4,
-					"mb_slave_config_file": "configs/sdm220.json"
+					"mb_slave_config_file": "configs/sdm220_1.json"
 				}
 			]
 		}

@@ -64,6 +64,10 @@ typedef struct  {
 	TypeID		func_n;
 } cfg_iec_func;
 
+typedef enum  {
+	cfg_prior_low =0,
+	cfg_prior_hight,
+} cfg_iec_prior;
 
 typedef enum
 {
@@ -91,10 +95,7 @@ typedef enum  {
 	mem_err
 } data_state;
 
-typedef enum  {
-	cfg_prior_low =0,
-	cfg_prior_hight,
-} cfg_iec_prior;
+
 
 
 typedef struct  {
@@ -116,11 +117,11 @@ typedef struct  {
 	uint16_t				iec_ioa_addr;
 	uint8_t				iec_size;
 
-//	iec_add_params		add_params;
-	cfg_byte_swap		byte_swap;
-	cfg_iec_prior		iec_priority;
-	uint8_t				on_off_flag;
-	uint16_t				on_off_data;
+	iec_add_params		add_params;
+//	cfg_byte_swap		byte_swap;
+//	cfg_iec_prior		iec_priority;
+//	uint8_t				on_off_flag;
+//	uint16_t				on_off_data;
 
 	uint8_t				mem_size;
 	uint8_t				*mem_ptr;

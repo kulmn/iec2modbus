@@ -34,6 +34,8 @@ const cfg_iec_func iec_write_fn_str[] = {
 
 
 
+
+
 // Just a utility function.
  void print_json_object(struct json_object *jobj, const char *msg)
 {
@@ -135,22 +137,58 @@ bool read_json_file(const char *filename, struct json_object **parsed_json)
 }
 
 
+int parse_iec_add_params(struct json_object *add_parm_json, Command_TypeDef *cmd )
+{
+	struct json_object *tmp_json=NULL;
+	const char *str;
+
+	int arr_len = json_object_array_length(add_parm_json);
+	for(int i = 0; i < arr_len; i++)
+	{
+		tmp_json = json_object_array_get_idx(add_parm_json, i);
+		str = json_object_get_string(tmp_json);
+		char *param = strtok( (char*) str, "=");
+		if (param != NULL)
+		{
+			char *value = strtok(NULL, "=");
+			printf( " param = %s, value = %s\n", param, value );
+
+			if ( !strcmp(param, "priority") )
+			{
+				if ( !strcmp(value, "hight") )  cmd->add_params.priority = cfg_prior_hight;
+				else cmd->add_params.priority = cfg_prior_low;
+			}
+			else if ( !strcmp(param, "byteswap") )
+			{
+				if ( !strcmp(value, "abcd") ) cmd->add_params.byte_swap = cfg_btsw_abcd;
+				else if ( !strcmp(value, "badc") ) cmd->add_params.byte_swap = cfg_btsw_badc;
+				else if ( !strcmp(value, "cdab") ) cmd->add_params.byte_swap = cfg_btsw_cdab;
+				else {} //use default
+			}
+			else if ( !strcmp(param, "ON") )
+			{
+				cmd->add_params.on_value  = strtol(value, NULL, 0);
+			}
+			else if ( !strcmp(param, "OFF") )
+			{
+				cmd->add_params.off_value  = strtol(value, NULL, 0);
+			}
+			else
+			{
+				slog_error( "Wrong modbus read function: '%s' .", str);
+				return false;
+			}
+		}
+	}
+	return true;
+}
+
 bool parse_read_command(struct json_object *cur_cmd, Command_TypeDef *read_cmd )
 {
 	const char *str;
 	struct json_object *tmp_json=NULL, *mb_data_json=NULL, *iec_data_json=NULL;
 
-	// parse iec104 priority code
-	read_cmd->iec_priority = cfg_prior_low;
-	if (json_object_object_get_ex(cur_cmd, "iec_priority", &tmp_json ) )
-	{
-		str = json_object_get_string(tmp_json);
-		if ( !strcmp(str, "hight") )  read_cmd->iec_priority = cfg_prior_hight;
-	}
-
-
 	json_object_object_get_ex(cur_cmd, "modbus_data", &mb_data_json );
-
 	// parse modbus function code
 	tmp_json = json_object_array_get_idx(mb_data_json, cfg_mb_function);
 	str = json_object_get_string(tmp_json);
@@ -200,16 +238,13 @@ bool parse_read_command(struct json_object *cur_cmd, Command_TypeDef *read_cmd )
 	tmp_json = json_object_array_get_idx(iec_data_json, cfg_iec_size);
 	read_cmd->iec_size = json_object_get_int(tmp_json);
 
-
-	read_cmd->byte_swap = cfg_btsw_dcba;			// default value
-	if (json_object_object_get_ex(cur_cmd, "byteswap", &mb_data_json ))
+	// Additional parameters
+	struct json_object *add_parm_json=NULL;
+	if (json_object_object_get_ex(cur_cmd, "add_param", &add_parm_json ))
 	{
-		str = json_object_get_string(tmp_json);
-		if ( !strcmp(str, "abcd") ) read_cmd->byte_swap = cfg_btsw_abcd;
-		else if ( !strcmp(str, "badc") ) read_cmd->byte_swap = cfg_btsw_badc;
-		else if ( !strcmp(str, "cdab") ) read_cmd->byte_swap = cfg_btsw_cdab;
-		else {} //use default
+		parse_iec_add_params( add_parm_json , read_cmd );
 	}
+
 	// Allocate and initialize the memory to store the registers
 	if (! allocate_read_cmd_memory(read_cmd)) return false;
 
@@ -222,7 +257,6 @@ int parse_write_command(struct json_object *cur_cmd, Command_TypeDef *write_cmd 
 	struct json_object *tmp_json=NULL, *mb_data_json=NULL, *iec_data_json=NULL;
 
 	json_object_object_get_ex(cur_cmd, "modbus_data", &mb_data_json );
-
 
 	// parse function code
 	tmp_json = json_object_array_get_idx(mb_data_json, cfg_mb_function);
@@ -267,30 +301,11 @@ int parse_write_command(struct json_object *cur_cmd, Command_TypeDef *write_cmd 
 	str = json_object_get_string(tmp_json);
 	write_cmd->iec_ioa_addr = strtol(str, NULL, 0);
 
-	// parse ON/OFF value
-	struct json_object *on_off_json=NULL;
-	write_cmd->on_off_flag = SP_STATE_NO;
-	if (json_object_object_get_ex(cur_cmd, "set_state", &on_off_json ))
+	// Additional parameters
+	struct json_object *add_parm_json=NULL;
+	if (json_object_object_get_ex(cur_cmd, "add_param", &add_parm_json ))
 	{
-		tmp_json = json_object_array_get_idx(on_off_json, cfg_onoff_state);
-		str = json_object_get_string(tmp_json);
-		if ( !strcmp(str, "ON") ) write_cmd->on_off_flag = SP_STATE_ON;
-		else if ( !strcmp(str, "OFF") ) write_cmd->on_off_flag = SP_STATE_OFF;
-
-		tmp_json = json_object_array_get_idx(on_off_json, cfg_onoff_value);
-		str = json_object_get_string(tmp_json);
-		write_cmd->on_off_data = strtol(str, NULL, 0);
-	}
-
-
-	write_cmd->byte_swap = cfg_btsw_dcba;		// default value
-	if (json_object_object_get_ex(cur_cmd, "byteswap", &mb_data_json ))
-	{
-		str = json_object_get_string(tmp_json);
-		if ( !strcmp(str, "abcd") ) write_cmd->byte_swap = cfg_btsw_abcd;
-		else if ( !strcmp(str, "badc") ) write_cmd->byte_swap = cfg_btsw_badc;
-		else if ( !strcmp(str, "cdab") ) write_cmd->byte_swap = cfg_btsw_cdab;
-		else {} //use default
+		parse_iec_add_params( add_parm_json , write_cmd );
 	}
 
 	return true;

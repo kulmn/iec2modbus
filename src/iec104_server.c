@@ -99,7 +99,7 @@ int iec104_uint32_asdu(Command_TypeDef *cmd, CS101_ASDU asdu)
 		uint16_t *data_ptr = (uint16_t*) cmd->mem_ptr;
 		for (int i = 0; i < num_ioa; i++)
 		{
-			switch(cmd->byte_swap)
+			switch(cmd->add_params.byte_swap)
 			{
 				case cfg_btsw_abcd: data  = ntohl(((uint32_t)data_ptr[0] << 16) + data_ptr[1]); break;
 				case cfg_btsw_badc: data  = ntohl((uint32_t)(bswap_16(data_ptr[0]) << 16) + bswap_16(data_ptr[1])); break;
@@ -217,7 +217,7 @@ int iec104_send_changed_data(CS104_Slave slave, Transl_Config_TypeDef *config, c
 			for (int x = 0; x < config->serialport[i].mb_slave[j].read_cmnds_num; x++)
 			{
 				data_state	mem_state = config->serialport[i].mb_slave[j].read_cmnds[x].mem_state;
-				cfg_iec_prior  iec_priority = config->serialport[i].mb_slave[j].read_cmnds[x].iec_priority;
+				cfg_iec_prior  iec_priority = config->serialport[i].mb_slave[j].read_cmnds[x].add_params.priority;
 
 				if (    ( (mem_state == mem_chg || mem_state == mem_err ) && iec_priority == cfg_prior_hight )
 						|| (iec_priority == cfg_prior_low) )
@@ -251,31 +251,20 @@ bool iec104_receive_single_cmd(Command_TypeDef* cmd,  InformationObject io)
 	SingleCommand sc = (SingleCommand) io;
 	uint16_t *data_ptr = (uint16_t *) cmd->mem_ptr;
 
-	switch(cmd->on_off_flag)
+	if (SingleCommand_getState(sc ) )
 	{
-		case SP_STATE_ON:
-		{
-			if (SingleCommand_getState(sc ) )
-			{
-				data_ptr[0] = cmd->on_off_data;
-				cmd->mem_state = mem_new;
-			}else return false;
-		}break;
-		case SP_STATE_OFF:
-		{
-			if (!SingleCommand_getState(sc ) )
-			{
-				data_ptr[0] = cmd->on_off_data;
-				cmd->mem_state = mem_new;
-			}else return false;
-		}break;
-		default:
-		{
-			if (SingleCommand_getState(sc ) ) data_ptr[0] = 0xFFFF;
-			else data_ptr[0] = 0x0000;
-			cmd->mem_state = mem_new;
-		}
+		if (cmd->add_params.set_params & (1 << iec_on_value) )
+			data_ptr[0] = cmd->add_params.on_value;
+		else
+			data_ptr[0] = 1;
+	}else
+	{
+		if (cmd->add_params.set_params & (1 << iec_off_value) )
+			data_ptr[0] = cmd->add_params.off_value;
+		else
+			data_ptr[0] = 0;
 	}
+	cmd->mem_state = mem_new;
 	return true;
 }
 
@@ -317,7 +306,7 @@ void iec104_receive_uint32(Command_TypeDef* cmd,  InformationObject io)
 	uint32_t data = Bitstring32Command_getValue((Bitstring32Command) io);
 
 
-	switch(cmd->byte_swap)
+	switch(cmd->add_params.byte_swap)
 	{
 		case cfg_btsw_abcd:
 		{
