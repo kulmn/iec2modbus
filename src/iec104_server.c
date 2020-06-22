@@ -51,50 +51,52 @@ static int iec104_set_system_time(CP56Time2a newTime)
 	return rc;
 }
 
-int iec_104_single_point_asdu(Command_TypeDef *cmd, CS101_ASDU asdu)
+int iec_104_single_point_asdu(iec104_command *cmd, CS101_ASDU asdu)
 {
 	InformationObject io = NULL;
 	uint16_t ioa = cmd->iec_ioa_addr;
-	uint16_t data  =  *(uint16_t*) cmd->value.mem_ptr;
+	uint16_t data  =  *(uint16_t*) cmd->value->mem_ptr;
 	bool sp_data;
 
-	int size;
-
 	QualityDescriptor quality=IEC60870_QUALITY_GOOD;
-	if (cmd->value.mem_state == mem_err) quality = IEC60870_QUALITY_INVALID;
+	if (cmd->value->mem_state == mem_err) quality = IEC60870_QUALITY_INVALID;
 
-	if ((cmd->mb_func == MODBUS_FC_READ_COILS) || (cmd->mb_func == MODBUS_FC_READ_DISCRETE_INPUTS))
-		size = cmd->mb_data_size;
-	else
-		size = cmd->iec_size;
+	int size = cmd->iec_size;
 
-	for (int i = 0; i < size; i++)
+	if (size>0 && size<17)
 	{
-		if ( data & (1<<i)  ) sp_data = true;
-		else  sp_data = false;
-		io = (InformationObject) SinglePointInformation_create(NULL, ioa++, sp_data, quality );
-		InformationObject_setType(io, cmd->iec_func );
-		CS101_ASDU_addInformationObject(asdu, io );
-		InformationObject_destroy(io );
+		for (int i = 0; i < size; i++)
+		{
+			if ( data & (1<<i)  ) sp_data = true;
+			else  sp_data = false;
+			io = (InformationObject) SinglePointInformation_create(NULL, ioa++, sp_data, quality );
+			InformationObject_setType(io, cmd->iec_func );
+			CS101_ASDU_addInformationObject(asdu, io );
+			InformationObject_destroy(io );
+		}
+	}else
+	{
+		//FIXME Error
 	}
 
 	return 0;
 }
 
 
-int iec104_uint32_asdu(Command_TypeDef *cmd, CS101_ASDU asdu)
+int iec104_uint32_asdu(iec104_command *cmd, CS101_ASDU asdu)
 {
-	if ((cmd->mb_func == MODBUS_FC_READ_HOLDING_REGISTERS) || (cmd->mb_func == MODBUS_FC_READ_INPUT_REGISTERS))
+	uint8_t num_ioa = (cmd->value->mem_size) / (sizeof(uint32_t));
+	if (num_ioa)
 	{
 		InformationObject io = NULL;
 		uint32_t data;
 
 		QualityDescriptor quality=IEC60870_QUALITY_GOOD;
-		if (cmd->value.mem_state == mem_err) quality = IEC60870_QUALITY_INVALID;
+		if (cmd->value->mem_state == mem_err) quality = IEC60870_QUALITY_INVALID;
 
 		uint16_t ioa = cmd->iec_ioa_addr;
-		uint8_t num_ioa = (cmd->mb_data_size * sizeof(uint16_t)) / (sizeof(uint32_t));
-		uint16_t *data_ptr = (uint16_t*) cmd->value.mem_ptr;
+//		uint8_t num_ioa = (cmd->mb_data_size * sizeof(uint16_t)) / (sizeof(uint32_t));
+		uint16_t *data_ptr = (uint16_t*) cmd->value->mem_ptr;
 		for (int i = 0; i < num_ioa; i++)
 		{
 			switch(cmd->add_params.byte_swap)
@@ -122,17 +124,19 @@ int iec104_uint32_asdu(Command_TypeDef *cmd, CS101_ASDU asdu)
 	return 0;
 }
 
-int iec104_uint16_asdu(Command_TypeDef *cmd, CS101_ASDU asdu)
+int iec104_uint16_asdu(iec104_command *cmd, CS101_ASDU asdu)
 {
 
 	QualityDescriptor quality=IEC60870_QUALITY_GOOD;
-	if (cmd->value.mem_state == mem_err) quality = IEC60870_QUALITY_INVALID;
-	if ((cmd->mb_func == MODBUS_FC_READ_HOLDING_REGISTERS) || (cmd->mb_func == MODBUS_FC_READ_INPUT_REGISTERS))
+	if (cmd->value->mem_state == mem_err) quality = IEC60870_QUALITY_INVALID;
+
+	uint8_t num_ioa = (cmd->value->mem_size) / (sizeof(uint16_t));
+	if (num_ioa)
 	{
 		InformationObject io = NULL;
 		uint16_t ioa = cmd->iec_ioa_addr;
-		uint8_t num_ioa = (cmd->mb_data_size * sizeof(uint16_t)) / (sizeof(uint16_t));
-		uint16_t *data_ptr = (uint16_t*) cmd->value.mem_ptr;
+//		uint8_t num_ioa = (cmd->mb_data_size * sizeof(uint16_t)) / (sizeof(uint16_t));
+		uint16_t *data_ptr = (uint16_t*) cmd->value->mem_ptr;
 		for (int i = 0; i < num_ioa; i++)
 		{
 			io = (InformationObject) MeasuredValueScaled_create(NULL, ioa++, data_ptr[i], quality );
@@ -149,7 +153,7 @@ int iec104_uint16_asdu(Command_TypeDef *cmd, CS101_ASDU asdu)
 
 
 
-int iec104_create_asdu(Command_TypeDef *cmd, CS101_ASDU asdu)
+int iec104_create_asdu(iec104_command *cmd, CS101_ASDU asdu)
 {
 	switch (cmd->iec_func)
 	{
@@ -212,20 +216,20 @@ int iec104_send_changed_data(CS104_Slave slave, Transl_Config_TypeDef *config, c
 		for (int j = 0; j < config->serialport[i].num_slaves; j++)
 		{
 			int ca_addr = config->serialport[i].mb_slave[j].mb_slave_addr;
-			for (int x = 0; x < config->serialport[i].mb_slave[j].read_cmnds_num; x++)
+			for (int x = 0; x < config->serialport[i].mb_slave[j].iec104_read_cmd_num; x++)
 			{
-				data_state	mem_state = config->serialport[i].mb_slave[j].read_cmnds[x].value.mem_state;
-				cfg_iec_prior  iec_priority = config->serialport[i].mb_slave[j].read_cmnds[x].add_params.priority;
+				data_state	mem_state = config->serialport[i].mb_slave[j].iec104_read_cmds[x].value->mem_state;
+				cfg_iec_prior  iec_priority = config->serialport[i].mb_slave[j].iec104_read_cmds[x].add_params.priority;
 
-				if (    ( (mem_state == mem_chg || mem_state == mem_err ) && iec_priority == cfg_prior_hight )
-						|| (iec_priority == cfg_prior_low) )
+				if (    ( (mem_state == mem_chg ) && iec_priority == priority && priority == cfg_prior_hight)
+						|| ( mem_state != mem_init && priority== cfg_prior_low) )
 				{
 					newAsdu = CS101_ASDU_create(alParams, false, CS101_COT_SPONTANEOUS, 0, ca_addr, false, false );
-					if (iec104_create_asdu(&config->serialport[i].mb_slave[j].read_cmnds[x], newAsdu ) == 0)
+					if (iec104_create_asdu(&config->serialport[i].mb_slave[j].iec104_read_cmds[x], newAsdu ) == 0)
 					{
 						CS104_Slave_enqueueASDU(slave, newAsdu );
 						if (mem_state != mem_err)
-							config->serialport[i].mb_slave[j].read_cmnds[x].value.mem_state = mem_cur;
+							config->serialport[i].mb_slave[j].iec104_read_cmds[x].value->mem_state = mem_cur;
 /*
 						InformationObject io = CS101_ASDU_getElement(newAsdu, 0 );
 						int ioa_addr = InformationObject_getObjectAddress(io );
@@ -244,10 +248,10 @@ int iec104_send_changed_data(CS104_Slave slave, Transl_Config_TypeDef *config, c
 }
 
 /*************************************************************************************/
-bool iec104_receive_single_cmd(Command_TypeDef* cmd,  InformationObject io)
+bool iec104_receive_single_cmd(iec104_command* cmd,  InformationObject io)
 {
 	SingleCommand sc = (SingleCommand) io;
-	uint16_t *data_ptr = (uint16_t *) cmd->value.mem_ptr;
+	uint16_t *data_ptr = (uint16_t *) cmd->value->mem_ptr;
 
 	if (SingleCommand_getState(sc ) )
 	{
@@ -262,45 +266,45 @@ bool iec104_receive_single_cmd(Command_TypeDef* cmd,  InformationObject io)
 		else
 			data_ptr[0] = 0;
 	}
-	cmd->value.mem_state = mem_new;
+	cmd->value->mem_state = mem_new;
 	return true;
 }
 
 /*************************************************************************************/
-void iec104_receive_double_cmd(Command_TypeDef* cmd,  InformationObject io)
+void iec104_receive_double_cmd(iec104_command* cmd,  InformationObject io)
 {
 	DoublePointValue state = DoubleCommand_getState((DoubleCommand) io );
-	uint16_t *data_ptr = (uint16_t *) cmd->value.mem_ptr;
+	uint16_t *data_ptr = (uint16_t *) cmd->value->mem_ptr;
 	switch(state)
 	{
 		case IEC60870_DOUBLE_POINT_ON:
 		{
 			data_ptr[0] = 0xFFFF;
-			cmd->value.mem_state = mem_new;
+			cmd->value->mem_state = mem_new;
 		}break;
 		case IEC60870_DOUBLE_POINT_OFF:
 		{
 			data_ptr[0] = 0x0000;
-			cmd->value.mem_state = mem_new;
+			cmd->value->mem_state = mem_new;
 		}break;
 		default:
-			cmd->value.mem_state = mem_err;
+			cmd->value->mem_state = mem_err;
 	}
 }
 
 
 /*************************************************************************************/
-void iec104_receive_uint16(Command_TypeDef* cmd,  InformationObject io)
+void iec104_receive_uint16(iec104_command* cmd,  InformationObject io)
 {
-	uint16_t *data_ptr = (uint16_t *) cmd->value.mem_ptr;
+	uint16_t *data_ptr = (uint16_t *) cmd->value->mem_ptr;
 	data_ptr[0] = (uint16_t ) SetpointCommandScaled_getValue((SetpointCommandScaled) io);
-	cmd->value.mem_state = mem_new;
+	cmd->value->mem_state = mem_new;
 }
 
 /*************************************************************************************/
-void iec104_receive_uint32(Command_TypeDef* cmd,  InformationObject io)
+void iec104_receive_uint32(iec104_command* cmd,  InformationObject io)
 {
-	uint16_t *data_ptr = (uint16_t *) cmd->value.mem_ptr;
+	uint16_t *data_ptr = (uint16_t *) cmd->value->mem_ptr;
 	uint32_t data = Bitstring32Command_getValue((Bitstring32Command) io);
 
 
@@ -332,13 +336,13 @@ void iec104_receive_uint32(Command_TypeDef* cmd,  InformationObject io)
 		}
 	}
 
-	cmd->value.mem_state = mem_new;
+	cmd->value->mem_state = mem_new;
 
 }
 
 
 /*************************************************************************************/
-bool iec104_receive_cmd(Command_TypeDef *cmd, InformationObject io, CS101_ASDU asdu)
+bool iec104_receive_cmd(iec104_command *cmd, InformationObject io, CS101_ASDU asdu)
 {
 	if (CS101_ASDU_getCOT(asdu ) == CS101_COT_ACTIVATION)
 	{
@@ -382,10 +386,10 @@ bool iec104_receive_cmd(Command_TypeDef *cmd, InformationObject io, CS101_ASDU a
 
 
 /*************************************************************************************/
-static Command_TypeDef* find_iec_cmd(Transl_Config_TypeDef *config, InformationObject io ,TypeID type_id, int common_addr, uint8_t N_cmd)
+static iec104_command* find_iec_cmd(Transl_Config_TypeDef *config, InformationObject io ,TypeID type_id, int common_addr, uint8_t N_cmd)
 {
 	int ioa_addr = InformationObject_getObjectAddress(io );
-	Command_TypeDef *find_cmd_ptr[MAX_CMD_CNT] ;
+	iec104_command *find_cmd_ptr[MAX_CMD_CNT] ;
 	uint8_t cmd_cnt = 0;
 
 	for (int i = 0; i < MAX_CMD_CNT; i++)	find_cmd_ptr[i] = NULL;
@@ -395,12 +399,12 @@ static Command_TypeDef* find_iec_cmd(Transl_Config_TypeDef *config, InformationO
 		for (int j = 0; j < config->serialport[i].num_slaves; j++)
 		{
 			uint8_t mb_addr =  config->serialport[i].mb_slave[j].mb_slave_addr;
-			for (int x = 0;x < config->serialport[i].mb_slave[j].write_cmnds_num;  x++)	// Modbus slave read commands num
+			for (int x = 0;x < config->serialport[i].mb_slave[j].iec104_write_cmd_num;  x++)	// Modbus slave read commands num
 			{
-				if ( (common_addr == mb_addr) && (ioa_addr == config->serialport[i].mb_slave[j].write_cmnds[x].iec_ioa_addr) && \
-						(type_id == config->serialport[i].mb_slave[j].write_cmnds[x].iec_func) )
+				if ( (common_addr == mb_addr) && (ioa_addr == config->serialport[i].mb_slave[j].iec104_write_cmds[x].iec_ioa_addr) && \
+						(type_id == config->serialport[i].mb_slave[j].iec104_write_cmds[x].iec_func) )
 				{
-					find_cmd_ptr[cmd_cnt++] = &config->serialport[i].mb_slave[j].write_cmnds[x];
+					find_cmd_ptr[cmd_cnt++] = &config->serialport[i].mb_slave[j].iec104_write_cmds[x];
 					if (cmd_cnt >= MAX_CMD_CNT) return NULL;
 				}
 			}
@@ -449,13 +453,13 @@ static bool interrogationHandler(void *parameter, IMasterConnection connection, 
 			for (int j = 0; j < config->serialport[i].num_slaves; j++)
 			{
 				uint8_t mb_addr =  config->serialport[i].mb_slave[j].mb_slave_addr;
-				for (int x = 0;x < config->serialport[i].mb_slave[j].read_cmnds_num;  x++)	// Modbus slave read commands num
+				for (int x = 0;x < config->serialport[i].mb_slave[j].iec104_read_cmd_num;  x++)	// Modbus slave read commands num
 				{
 					newAsdu = CS101_ASDU_create(alParams, false, CS101_COT_INTERROGATED_BY_STATION, 0, mb_addr, false, false );
-					if ( (config->serialport[i].mb_slave[j].read_cmnds[x].value.mem_state != mem_init) || \
-							config->serialport[i].mb_slave[j].read_cmnds[x].value.mem_state != mem_err)
+					if ( (config->serialport[i].mb_slave[j].iec104_read_cmds[x].value->mem_state != mem_init) || \
+							config->serialport[i].mb_slave[j].iec104_read_cmds[x].value->mem_state != mem_err)
 					{
-						if (iec104_create_asdu(&config->serialport[i].mb_slave[j].read_cmnds[x],  newAsdu) == 0)
+						if (iec104_create_asdu(&config->serialport[i].mb_slave[j].iec104_read_cmds[x],  newAsdu) == 0)
 						{
 							IMasterConnection_sendASDU(connection, newAsdu );
 						}
@@ -481,7 +485,7 @@ static bool asduHandler(void *parameter, IMasterConnection connection, CS101_ASD
 	Transl_Config_TypeDef *config = (Transl_Config_TypeDef*) parameter;
 	bool	rc = false;
 
-	Command_TypeDef *write_cmd = NULL;
+	iec104_command *write_cmd = NULL;
 	TypeID type_id = CS101_ASDU_getTypeID(asdu );
 	uint8_t common_addr = CS101_ASDU_getCA(asdu );
 	CS101_CauseOfTransmission cot = CS101_ASDU_getCOT(asdu);

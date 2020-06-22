@@ -119,31 +119,35 @@ int main(int argc, char *argv[])
 	{
 		for (int j = 0; j < config->serialport[i].num_slaves; j++)// Modbus slaves num
 		{
-			for (int x = 0; x < config->serialport[i].mb_slave[j].write_cmnds_num; x++) // Modbus slave write commands num
+			for (int x = 0; x < config->serialport[i].mb_slave[j].mb_write_cmd_num; x++) // Modbus slave write commands num
 			{
-				free(config->serialport[i].mb_slave[j].write_cmnds[x].value.mem_ptr);
+				free(config->serialport[i].mb_slave[j].mb_write_cmds[x].value->mem_ptr);
+				free(config->serialport[i].mb_slave[j].mb_write_cmds[x].value);
 			}
 		}
 	}
-	for (int i = 0; i < config->num_ports; i++)	// Serial ports num
-	{
-		for (int j = 0; j < config->serialport[i].num_slaves; j++)// Modbus slaves num
-		{
-			for (int x = 0; x < config->serialport[i].mb_slave[j].read_cmnds_num; x++) // Modbus slave write commands num
-			{
-				free(config->serialport[i].mb_slave[j].read_cmnds[x].value.mem_ptr);
-			}
-		}
-	}
-
 
 	for (int i = 0; i < config->num_ports; i++)	// Serial ports num
 	{
 		for (int j = 0; j < config->serialport[i].num_slaves; j++)// Modbus slaves num
 		{
+			for (int x = 0; x < config->serialport[i].mb_slave[j].mb_read_cmd_num; x++) // Modbus slave write commands num
+			{
+				free(config->serialport[i].mb_slave[j].mb_read_cmds[x].value->mem_ptr);
+				free(config->serialport[i].mb_slave[j].mb_read_cmds[x].value);
+			}
+		}
+	}
 
-				free(config->serialport[i].mb_slave[j].read_cmnds);
-				free(config->serialport[i].mb_slave[j].write_cmnds);
+
+	for (int i = 0; i < config->num_ports; i++)	// Serial ports num
+	{
+		for (int j = 0; j < config->serialport[i].num_slaves; j++)// Modbus slaves num
+		{
+				free(config->serialport[i].mb_slave[j].mb_read_cmds);
+				free(config->serialport[i].mb_slave[j].mb_write_cmds);
+				free(config->serialport[i].mb_slave[j].iec104_read_cmds);
+				free(config->serialport[i].mb_slave[j].iec104_write_cmds);
 		}
 	}
 

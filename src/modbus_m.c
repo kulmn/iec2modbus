@@ -20,6 +20,8 @@
 #endif
 
 
+
+
 int modbus_write(modbus_t *mb_ptr, Modbus_Slave_TypeDef *slave)	//FIXME ALL
 {
 	int rc;
@@ -31,16 +33,16 @@ int modbus_write(modbus_t *mb_ptr, Modbus_Slave_TypeDef *slave)	//FIXME ALL
 		return -1;
 	}
 
-	for (int i = 0; i < slave->write_cmnds_num; i++)
+	for (int i = 0; i < slave->mb_write_cmd_num; i++)
 	{
-		switch (slave->write_cmnds[i].mb_func)
+		switch (slave->mb_write_cmds[i].mb_func)
 		{
 			case MODBUS_FC_WRITE_SINGLE_COIL: {
-				if (slave->write_cmnds[i].value.mem_state == mem_new)
+				if (slave->mb_write_cmds[i].value->mem_state == mem_new)
 				{
-					int status = (uint8_t) slave->write_cmnds[i].value.mem_ptr[0];
-					rc = modbus_write_bit(mb_ptr, slave->write_cmnds[i].mb_data_addr, status );
-					slave->write_cmnds[i].value.mem_state = mem_cur;
+					int status = (uint8_t) slave->mb_write_cmds[i].value->mem_ptr[0];
+					rc = modbus_write_bit(mb_ptr, slave->mb_write_cmds[i].mb_data_addr, status );
+					slave->mb_write_cmds[i].value->mem_state = mem_cur;
 				}
 			}break;
 			case MODBUS_FC_WRITE_MULTIPLE_COILS:		// FIXME
@@ -52,20 +54,20 @@ int modbus_write(modbus_t *mb_ptr, Modbus_Slave_TypeDef *slave)	//FIXME ALL
 			}break;
 			case MODBUS_FC_WRITE_SINGLE_REGISTER:
 			{
-				if (slave->write_cmnds[i].value.mem_state == mem_new)
+				if (slave->mb_write_cmds[i].value->mem_state == mem_new)
 				{
-					uint16_t data = (uint16_t) slave->write_cmnds[i].value.mem_ptr[0];
-					rc = modbus_write_register(mb_ptr, slave->write_cmnds[i].mb_data_addr, data );
-					slave->write_cmnds[i].value.mem_state = mem_cur;
+					uint16_t data = (uint16_t) slave->mb_write_cmds[i].value->mem_ptr[0];
+					rc = modbus_write_register(mb_ptr, slave->mb_write_cmds[i].mb_data_addr, data );
+					slave->mb_write_cmds[i].value->mem_state = mem_cur;
 				}
 			}break;
 			case MODBUS_FC_WRITE_MULTIPLE_REGISTERS:
 			{
-				if (slave->write_cmnds[i].value.mem_state == mem_new)
+				if (slave->mb_write_cmds[i].value->mem_state == mem_new)
 				{
-					rc = modbus_write_registers(mb_ptr, slave->write_cmnds[i].mb_data_addr,
-							slave->write_cmnds[i].mb_data_size, (const uint16_t*) slave->write_cmnds[i].value.mem_ptr );
-					slave->write_cmnds[i].value.mem_state = mem_cur;
+					rc = modbus_write_registers(mb_ptr, slave->mb_write_cmds[i].mb_data_addr,
+							slave->mb_write_cmds[i].mb_data_size, (const uint16_t*) slave->mb_write_cmds[i].value->mem_ptr );
+					slave->mb_write_cmds[i].value->mem_state = mem_cur;
 				}
 			}break;
 		}
@@ -86,32 +88,32 @@ int modbus_read(modbus_t* mb_ptr, Modbus_Slave_TypeDef *slave)
 		return -1;
 	}
 
-	for (int i = 0; i < slave->read_cmnds_num; i++)
+	for (int i = 0; i < slave->mb_read_cmd_num; i++)
 	{
-		data_ptr = (uint8_t*) malloc(slave->read_cmnds[i].value.mem_size );
+		data_ptr = (uint8_t*) malloc(slave->mb_read_cmds[i].value->mem_size );
 		if (data_ptr == NULL)
 		{
-			slog_error("Unable to allocate %d bytes for modbus read data  ",slave->read_cmnds[i].value.mem_size);
+			slog_error("Unable to allocate %d bytes for modbus read data  ",slave->mb_read_cmds[i].value->mem_size);
 			return -1;
 		}
-		switch (slave->read_cmnds[i].mb_func)
+		switch (slave->mb_read_cmds[i].mb_func)
 		{
 			case MODBUS_FC_READ_COILS:
 			{
-				rc = modbus_read_bits(mb_ptr, slave->read_cmnds[i].mb_data_addr, slave->read_cmnds[i].mb_data_size, data_ptr );
+				rc = modbus_read_bits(mb_ptr, slave->mb_read_cmds[i].mb_data_addr, slave->mb_read_cmds[i].mb_data_size, data_ptr );
 			}break;
 			case MODBUS_FC_READ_DISCRETE_INPUTS:
 			{
-				rc = modbus_read_input_bits(mb_ptr, slave->read_cmnds[i].mb_data_addr, slave->read_cmnds[i].mb_data_size, data_ptr );
+				rc = modbus_read_input_bits(mb_ptr, slave->mb_read_cmds[i].mb_data_addr, slave->mb_read_cmds[i].mb_data_size, data_ptr );
 			}break;
 			case MODBUS_FC_READ_HOLDING_REGISTERS:
 			{
-				rc = modbus_read_registers(mb_ptr, slave->read_cmnds[i].mb_data_addr, slave->read_cmnds[i].mb_data_size,\
+				rc = modbus_read_registers(mb_ptr, slave->mb_read_cmds[i].mb_data_addr, slave->mb_read_cmds[i].mb_data_size,\
 						(uint16_t*) data_ptr );
 			}break;
 			case MODBUS_FC_READ_INPUT_REGISTERS:
 			{
-				rc = modbus_read_input_registers(mb_ptr, slave->read_cmnds[i].mb_data_addr, slave->read_cmnds[i].mb_data_size,\
+				rc = modbus_read_input_registers(mb_ptr, slave->mb_read_cmds[i].mb_data_addr, slave->mb_read_cmds[i].mb_data_size,\
 						(uint16_t*) data_ptr );
 			}break;
 			default:
@@ -121,17 +123,17 @@ int modbus_read(modbus_t* mb_ptr, Modbus_Slave_TypeDef *slave)
 		}
 		data_state	state;
 		if (rc == -1) state = mem_err;
-		else if (memcmp(data_ptr, slave->read_cmnds[i].value.mem_ptr, slave->read_cmnds[i].value.mem_size) == 0)
+		else if (memcmp(data_ptr, slave->mb_read_cmds[i].value->mem_ptr, slave->mb_read_cmds[i].value->mem_size) != 0)
 		{
-			memcpy(slave->read_cmnds[i].value.mem_ptr, data_ptr, slave->read_cmnds[i].value.mem_size);
+			memcpy(slave->mb_read_cmds[i].value->mem_ptr, data_ptr, slave->mb_read_cmds[i].value->mem_size);
 			state = mem_chg;
 		}
 		else
 		{
-			memcpy(slave->read_cmnds[i].value.mem_ptr, data_ptr, slave->read_cmnds[i].value.mem_size);
+			memcpy(slave->mb_read_cmds[i].value->mem_ptr, data_ptr, slave->mb_read_cmds[i].value->mem_size);
 			state = mem_new;
 		}
-		slave->read_cmnds[i].value.mem_state = state;
+		slave->mb_read_cmds[i].value->mem_state = state;
 		free(data_ptr);
 
 	}
@@ -188,6 +190,7 @@ static void* ModbusThread(void *parameter)
 	{
 		for (int j = 0; j < port->num_slaves; j++)
 		{
+
 			if (modbus_write(port->mb_protocol_ptr, &port->mb_slave[j] ) == -1)
 			{
 				// Error			FIXME
@@ -197,6 +200,7 @@ static void* ModbusThread(void *parameter)
 			{
 				// Error			FIXME
 			}
+
 			Thread_sleep(30);
 
 		}
