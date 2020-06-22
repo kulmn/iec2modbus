@@ -63,16 +63,16 @@ const cfg_iec_func iec_write_fn_str[] = {
 		slog_error("Data size for read_command = 0, mb_fn=%d, ioa=%d ",  cmd->mb_func, cmd->iec_ioa_addr );
 		return false;
 	}
-	cmd->mem_ptr = (uint8_t*) malloc(size_in_bytes );
-	if (cmd->mem_ptr == NULL)
+	cmd->value.mem_ptr = (uint8_t*) malloc(size_in_bytes );
+	if (cmd->value.mem_ptr == NULL)
 	{
 		slog_error("Unable to allocate %d bytes for read_command, mb_fn=%d, ioa=%d ", size_in_bytes, cmd->mb_func, cmd->iec_ioa_addr );
 		return false;
 	}
-	memset(cmd->mem_ptr, 0, size_in_bytes );
+	memset(cmd->value.mem_ptr, 0, size_in_bytes );
 
-	cmd->mem_size = size_in_bytes;
-	cmd->mem_state = mem_init;
+	cmd->value.mem_size = size_in_bytes;
+	cmd->value.mem_state = mem_init;
 	return true;
 }
 

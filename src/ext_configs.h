@@ -88,6 +88,12 @@ typedef struct  {
 
 
 typedef enum  {
+	data_bool =0,
+	data_uint16,
+	data_uint32,
+} data_type;
+
+typedef enum  {
 	mem_init =0,
 	mem_cur,
 	mem_new,
@@ -97,9 +103,10 @@ typedef enum  {
 
 typedef struct  {
 	uint8_t				mem_size;
+	data_type			mem_type;
 	data_state			mem_state;
 	uint8_t				*mem_ptr;
-}Value_mem;
+}data_mem;
 
 typedef struct  {
 	uint8_t				mb_func;
@@ -111,10 +118,7 @@ typedef struct  {
 	uint8_t				iec_size;
 
 	iec_add_params		add_params;
-
-	uint8_t				mem_size;
-	uint8_t				*mem_ptr;
-	data_state			mem_state;
+	data_mem			value;
 } Command_TypeDef;
 
 

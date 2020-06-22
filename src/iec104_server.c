@@ -55,13 +55,13 @@ int iec_104_single_point_asdu(Command_TypeDef *cmd, CS101_ASDU asdu)
 {
 	InformationObject io = NULL;
 	uint16_t ioa = cmd->iec_ioa_addr;
-	uint16_t data  =  *(uint16_t*) cmd->mem_ptr;
+	uint16_t data  =  *(uint16_t*) cmd->value.mem_ptr;
 	bool sp_data;
 
 	int size;
 
 	QualityDescriptor quality=IEC60870_QUALITY_GOOD;
-	if (cmd->mem_state == mem_err) quality = IEC60870_QUALITY_INVALID;
+	if (cmd->value.mem_state == mem_err) quality = IEC60870_QUALITY_INVALID;
 
 	if ((cmd->mb_func == MODBUS_FC_READ_COILS) || (cmd->mb_func == MODBUS_FC_READ_DISCRETE_INPUTS))
 		size = cmd->mb_data_size;
@@ -90,11 +90,11 @@ int iec104_uint32_asdu(Command_TypeDef *cmd, CS101_ASDU asdu)
 		uint32_t data;
 
 		QualityDescriptor quality=IEC60870_QUALITY_GOOD;
-		if (cmd->mem_state == mem_err) quality = IEC60870_QUALITY_INVALID;
+		if (cmd->value.mem_state == mem_err) quality = IEC60870_QUALITY_INVALID;
 
 		uint16_t ioa = cmd->iec_ioa_addr;
 		uint8_t num_ioa = (cmd->mb_data_size * sizeof(uint16_t)) / (sizeof(uint32_t));
-		uint16_t *data_ptr = (uint16_t*) cmd->mem_ptr;
+		uint16_t *data_ptr = (uint16_t*) cmd->value.mem_ptr;
 		for (int i = 0; i < num_ioa; i++)
 		{
 			switch(cmd->add_params.byte_swap)
@@ -126,13 +126,13 @@ int iec104_uint16_asdu(Command_TypeDef *cmd, CS101_ASDU asdu)
 {
 
 	QualityDescriptor quality=IEC60870_QUALITY_GOOD;
-	if (cmd->mem_state == mem_err) quality = IEC60870_QUALITY_INVALID;
+	if (cmd->value.mem_state == mem_err) quality = IEC60870_QUALITY_INVALID;
 	if ((cmd->mb_func == MODBUS_FC_READ_HOLDING_REGISTERS) || (cmd->mb_func == MODBUS_FC_READ_INPUT_REGISTERS))
 	{
 		InformationObject io = NULL;
 		uint16_t ioa = cmd->iec_ioa_addr;
 		uint8_t num_ioa = (cmd->mb_data_size * sizeof(uint16_t)) / (sizeof(uint16_t));
-		uint16_t *data_ptr = (uint16_t*) cmd->mem_ptr;
+		uint16_t *data_ptr = (uint16_t*) cmd->value.mem_ptr;
 		for (int i = 0; i < num_ioa; i++)
 		{
 			io = (InformationObject) MeasuredValueScaled_create(NULL, ioa++, data_ptr[i], quality );
@@ -214,7 +214,7 @@ int iec104_send_changed_data(CS104_Slave slave, Transl_Config_TypeDef *config, c
 			int ca_addr = config->serialport[i].mb_slave[j].mb_slave_addr;
 			for (int x = 0; x < config->serialport[i].mb_slave[j].read_cmnds_num; x++)
 			{
-				data_state	mem_state = config->serialport[i].mb_slave[j].read_cmnds[x].mem_state;
+				data_state	mem_state = config->serialport[i].mb_slave[j].read_cmnds[x].value.mem_state;
 				cfg_iec_prior  iec_priority = config->serialport[i].mb_slave[j].read_cmnds[x].add_params.priority;
 
 				if (    ( (mem_state == mem_chg || mem_state == mem_err ) && iec_priority == cfg_prior_hight )
@@ -225,7 +225,7 @@ int iec104_send_changed_data(CS104_Slave slave, Transl_Config_TypeDef *config, c
 					{
 						CS104_Slave_enqueueASDU(slave, newAsdu );
 						if (mem_state != mem_err)
-							config->serialport[i].mb_slave[j].read_cmnds[x].mem_state = mem_cur;
+							config->serialport[i].mb_slave[j].read_cmnds[x].value.mem_state = mem_cur;
 /*
 						InformationObject io = CS101_ASDU_getElement(newAsdu, 0 );
 						int ioa_addr = InformationObject_getObjectAddress(io );
@@ -247,7 +247,7 @@ int iec104_send_changed_data(CS104_Slave slave, Transl_Config_TypeDef *config, c
 bool iec104_receive_single_cmd(Command_TypeDef* cmd,  InformationObject io)
 {
 	SingleCommand sc = (SingleCommand) io;
-	uint16_t *data_ptr = (uint16_t *) cmd->mem_ptr;
+	uint16_t *data_ptr = (uint16_t *) cmd->value.mem_ptr;
 
 	if (SingleCommand_getState(sc ) )
 	{
@@ -262,7 +262,7 @@ bool iec104_receive_single_cmd(Command_TypeDef* cmd,  InformationObject io)
 		else
 			data_ptr[0] = 0;
 	}
-	cmd->mem_state = mem_new;
+	cmd->value.mem_state = mem_new;
 	return true;
 }
 
@@ -270,21 +270,21 @@ bool iec104_receive_single_cmd(Command_TypeDef* cmd,  InformationObject io)
 void iec104_receive_double_cmd(Command_TypeDef* cmd,  InformationObject io)
 {
 	DoublePointValue state = DoubleCommand_getState((DoubleCommand) io );
-	uint16_t *data_ptr = (uint16_t *) cmd->mem_ptr;
+	uint16_t *data_ptr = (uint16_t *) cmd->value.mem_ptr;
 	switch(state)
 	{
 		case IEC60870_DOUBLE_POINT_ON:
 		{
 			data_ptr[0] = 0xFFFF;
-			cmd->mem_state = mem_new;
+			cmd->value.mem_state = mem_new;
 		}break;
 		case IEC60870_DOUBLE_POINT_OFF:
 		{
 			data_ptr[0] = 0x0000;
-			cmd->mem_state = mem_new;
+			cmd->value.mem_state = mem_new;
 		}break;
 		default:
-			cmd->mem_state = mem_err;
+			cmd->value.mem_state = mem_err;
 	}
 }
 
@@ -292,15 +292,15 @@ void iec104_receive_double_cmd(Command_TypeDef* cmd,  InformationObject io)
 /*************************************************************************************/
 void iec104_receive_uint16(Command_TypeDef* cmd,  InformationObject io)
 {
-	uint16_t *data_ptr = (uint16_t *) cmd->mem_ptr;
+	uint16_t *data_ptr = (uint16_t *) cmd->value.mem_ptr;
 	data_ptr[0] = (uint16_t ) SetpointCommandScaled_getValue((SetpointCommandScaled) io);
-	cmd->mem_state = mem_new;
+	cmd->value.mem_state = mem_new;
 }
 
 /*************************************************************************************/
 void iec104_receive_uint32(Command_TypeDef* cmd,  InformationObject io)
 {
-	uint16_t *data_ptr = (uint16_t *) cmd->mem_ptr;
+	uint16_t *data_ptr = (uint16_t *) cmd->value.mem_ptr;
 	uint32_t data = Bitstring32Command_getValue((Bitstring32Command) io);
 
 
@@ -332,7 +332,7 @@ void iec104_receive_uint32(Command_TypeDef* cmd,  InformationObject io)
 		}
 	}
 
-	cmd->mem_state = mem_new;
+	cmd->value.mem_state = mem_new;
 
 }
 
@@ -452,8 +452,8 @@ static bool interrogationHandler(void *parameter, IMasterConnection connection, 
 				for (int x = 0;x < config->serialport[i].mb_slave[j].read_cmnds_num;  x++)	// Modbus slave read commands num
 				{
 					newAsdu = CS101_ASDU_create(alParams, false, CS101_COT_INTERROGATED_BY_STATION, 0, mb_addr, false, false );
-					if ( (config->serialport[i].mb_slave[j].read_cmnds[x].mem_state != mem_init) || \
-							config->serialport[i].mb_slave[j].read_cmnds[x].mem_state != mem_err)
+					if ( (config->serialport[i].mb_slave[j].read_cmnds[x].value.mem_state != mem_init) || \
+							config->serialport[i].mb_slave[j].read_cmnds[x].value.mem_state != mem_err)
 					{
 						if (iec104_create_asdu(&config->serialport[i].mb_slave[j].read_cmnds[x],  newAsdu) == 0)
 						{

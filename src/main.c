@@ -52,16 +52,16 @@ int allocate_write_cmd_memory(Transl_Config_TypeDef *conf)
 					}
 
 				}
-				conf->serialport[i].mb_slave[j].write_cmnds[x].mem_ptr = (uint8_t*) malloc(size_in_bytes );
-				if (conf->serialport[i].mb_slave[j].write_cmnds[x].mem_ptr == NULL)
+				conf->serialport[i].mb_slave[j].write_cmnds[x].value.mem_ptr = (uint8_t*) malloc(size_in_bytes );
+				if (conf->serialport[i].mb_slave[j].write_cmnds[x].value.mem_ptr == NULL)
 				{
 					slog_error("Unable to allocate %d bytes in 'serial_ports:%d\\mb_slave:%d\\write_commands:%d' ",size_in_bytes,i,j,x);
 					return 1;
 				}
-				memset(conf->serialport[i].mb_slave[j].write_cmnds[x].mem_ptr, 0, size_in_bytes );
+				memset(conf->serialport[i].mb_slave[j].write_cmnds[x].value.mem_ptr, 0, size_in_bytes );
 
-				conf->serialport[i].mb_slave[j].write_cmnds[x].mem_size = size_in_bytes;
-				conf->serialport[i].mb_slave[j].write_cmnds[x].mem_state = mem_init;
+				conf->serialport[i].mb_slave[j].write_cmnds[x].value.mem_size = size_in_bytes;
+				conf->serialport[i].mb_slave[j].write_cmnds[x].value.mem_state = mem_init;
 			}
 		}
 	}
@@ -227,7 +227,7 @@ int main(int argc, char *argv[])
 		{
 			for (int x = 0; x < config->serialport[i].mb_slave[j].write_cmnds_num; x++) // Modbus slave write commands num
 			{
-				free(config->serialport[i].mb_slave[j].write_cmnds[x].mem_ptr);
+				free(config->serialport[i].mb_slave[j].write_cmnds[x].value.mem_ptr);
 			}
 		}
 	}
@@ -237,7 +237,7 @@ int main(int argc, char *argv[])
 		{
 			for (int x = 0; x < config->serialport[i].mb_slave[j].read_cmnds_num; x++) // Modbus slave write commands num
 			{
-				free(config->serialport[i].mb_slave[j].read_cmnds[x].mem_ptr);
+				free(config->serialport[i].mb_slave[j].read_cmnds[x].value.mem_ptr);
 			}
 		}
 	}
