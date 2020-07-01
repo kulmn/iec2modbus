@@ -112,6 +112,7 @@ typedef struct  {
 typedef struct  {
 	TypeID				iec_func;
 	uint16_t				iec_ioa_addr;
+	uint16_t				iec_asdu_addr;
 	uint8_t				iec_size;
 	iec_add_params		add_params;
 	data_mem			*value;

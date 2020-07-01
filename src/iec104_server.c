@@ -215,9 +215,10 @@ int iec104_send_changed_data(CS104_Slave slave, Transl_Config_TypeDef *config, c
 	{
 		for (int j = 0; j < config->serialport[i].num_slaves; j++)
 		{
-			int ca_addr = config->serialport[i].mb_slave[j].mb_slave_addr;
+			//int ca_addr = config->serialport[i].mb_slave[j].mb_slave_addr;
 			for (int x = 0; x < config->serialport[i].mb_slave[j].iec104_read_cmd_num; x++)
 			{
+				int ca_addr = config->serialport[i].mb_slave[j].iec104_read_cmds[x].iec_asdu_addr;
 				data_state	mem_state = config->serialport[i].mb_slave[j].iec104_read_cmds[x].value->mem_state;
 				cfg_iec_prior  iec_priority = config->serialport[i].mb_slave[j].iec104_read_cmds[x].add_params.priority;
 
@@ -398,9 +399,10 @@ static iec104_command* find_iec_cmd(Transl_Config_TypeDef *config, InformationOb
 	{
 		for (int j = 0; j < config->serialport[i].num_slaves; j++)
 		{
-			uint8_t mb_addr =  config->serialport[i].mb_slave[j].mb_slave_addr;
+			//uint8_t mb_addr =  config->serialport[i].mb_slave[j].mb_slave_addr;
 			for (int x = 0;x < config->serialport[i].mb_slave[j].iec104_write_cmd_num;  x++)	// Modbus slave read commands num
 			{
+				uint8_t mb_addr =  config->serialport[i].mb_slave[j].iec104_write_cmds[x].iec_asdu_addr;
 				if ( (common_addr == mb_addr) && (ioa_addr == config->serialport[i].mb_slave[j].iec104_write_cmds[x].iec_ioa_addr) && \
 						(type_id == config->serialport[i].mb_slave[j].iec104_write_cmds[x].iec_func) )
 				{
@@ -436,11 +438,18 @@ static bool iec104_set_time(IMasterConnection connection, CS101_ASDU asdu)
 
 
 
-static bool interrogationHandler(void *parameter, IMasterConnection connection, CS101_ASDU asdu, uint8_t qoi)
+static bool interrogation_command(Transl_Config_TypeDef *config, IMasterConnection connection, CS101_ASDU asdu)
 {
-	Transl_Config_TypeDef *config = parameter;
 	CS101_ASDU newAsdu = NULL;
 	CS101_AppLayerParameters alParams = IMasterConnection_getApplicationLayerParameters(connection );
+
+	InterrogationCommand irc = (InterrogationCommand) CS101_ASDU_getElement(asdu, 0 );
+	if (irc == NULL)
+	{
+		slog_warn("Wrong ASDU received");
+		return false;
+	}
+	uint8_t qoi = InterrogationCommand_getQOI(irc);
 
 	slog_info("Received interrogation for group %i", qoi);
 
@@ -452,9 +461,10 @@ static bool interrogationHandler(void *parameter, IMasterConnection connection, 
 		{
 			for (int j = 0; j < config->serialport[i].num_slaves; j++)
 			{
-				uint8_t mb_addr =  config->serialport[i].mb_slave[j].mb_slave_addr;
+//				uint8_t mb_addr =  config->serialport[i].mb_slave[j].mb_slave_addr;
 				for (int x = 0;x < config->serialport[i].mb_slave[j].iec104_read_cmd_num;  x++)	// Modbus slave read commands num
 				{
+					uint8_t mb_addr =  config->serialport[i].mb_slave[j].iec104_read_cmds[x].iec_asdu_addr;
 					newAsdu = CS101_ASDU_create(alParams, false, CS101_COT_INTERROGATED_BY_STATION, 0, mb_addr, false, false );
 					if ( (config->serialport[i].mb_slave[j].iec104_read_cmds[x].value->mem_state != mem_init) || \
 							config->serialport[i].mb_slave[j].iec104_read_cmds[x].value->mem_state != mem_err)
@@ -500,7 +510,11 @@ static bool asduHandler(void *parameter, IMasterConnection connection, CS101_ASD
 		case C_CS_NA_1: /* 103 - Clock synchronization command */
 		{
 			rc = iec104_set_time( connection, asdu );
+		}break;
 
+		case C_IC_NA_1:  /* 100 - interrogation command */
+		{
+			rc = interrogation_command(config, connection,  asdu);
 		}break;
 
 		default:
@@ -592,7 +606,7 @@ CS104_Slave iec104_server_init( Transl_Config_TypeDef *config, bool debug )
 	/* set the callback handler for the clock synchronization command */
 //	CS104_Slave_setClockSyncHandler(slave, clockSyncHandler, NULL );
 	/* set the callback handler for the interrogation command */
-	CS104_Slave_setInterrogationHandler(slave, interrogationHandler, config );
+//	CS104_Slave_setInterrogationHandler(slave, interrogationHandler, config );
 	/* set handler for other message types */
 	CS104_Slave_setASDUHandler(slave, asduHandler, config );
 	/* set handler to handle connection requests (optional) */

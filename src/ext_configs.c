@@ -564,6 +564,7 @@ bool parse_slave_config_file(const char *filename,Modbus_Slave_TypeDef *slave )
 	}
 	for (uint8_t i = 0; i < slave->iec104_read_cmd_num; i++)
 	{
+		slave->iec104_read_cmds[i].iec_asdu_addr = slave->mb_slave_addr;
 		cur_cmd = json_object_array_get_idx(read_cmd_json, i );
 		if ( ! parse_iec104_read_cmd( cur_cmd, &slave->iec104_read_cmds[i]) )
 		{
@@ -590,6 +591,7 @@ bool parse_slave_config_file(const char *filename,Modbus_Slave_TypeDef *slave )
 	}
 	for (int i = 0; i < slave->iec104_write_cmd_num; i++)
 	{
+		slave->iec104_write_cmds[i].iec_asdu_addr = slave->mb_slave_addr;
 		cur_cmd = json_object_array_get_idx(write_cmd_json, i );
 		if ( ! parse_iec104_write_cmd( cur_cmd, &slave->iec104_write_cmds[i]) )
 		{
