@@ -125,20 +125,15 @@ typedef struct  {
 	data_mem			*value;
 }modbus_command;
 
-/*
+
 typedef struct  {
-	uint8_t				mb_func;
-	uint16_t				mb_data_addr;
-	uint16_t				mb_data_size;
+	uint16_t					iec_asdu_addr;
+	uint8_t					iec104_read_cmd_num;
+	iec104_command 		*iec104_read_cmds;
+	uint8_t					iec104_write_cmd_num;
+	iec104_command 		*iec104_write_cmds;
+} iec104_slave;
 
-	TypeID				iec_func;
-	uint16_t				iec_ioa_addr;
-	uint8_t				iec_size;
-
-	iec_add_params		add_params;
-	data_mem			value;
-} Command_TypeDef;
-*/
 
 typedef struct  {
 	uint8_t		mb_slave_addr;
@@ -149,10 +144,10 @@ typedef struct  {
 	uint8_t					mb_write_cmd_num;
 	modbus_command		*mb_write_cmds;
 
-	uint8_t					iec104_read_cmd_num;
-	iec104_command 		*iec104_read_cmds;
-	uint8_t					iec104_write_cmd_num;
-	iec104_command 		*iec104_write_cmds;
+//	uint8_t					iec104_read_cmd_num;
+//	iec104_command 		*iec104_read_cmds;
+//	uint8_t					iec104_write_cmd_num;
+//	iec104_command 		*iec104_write_cmds;
 
 
 //	uint8_t		read_cmnds_num;
@@ -184,6 +179,9 @@ typedef struct  {
 	uint16_t						iec104_send_rate;
 	Serial_Port_TypeDef			*serialport;
 	uint8_t						num_ports;
+
+	uint16_t						iec104_slave_num;
+	iec104_slave					*iec104_slave;
 } Transl_Config_TypeDef;
 
 
