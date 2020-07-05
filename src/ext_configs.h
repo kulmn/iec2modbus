@@ -160,14 +160,14 @@ typedef struct  {
 //	uint16_t						iec104_slave_num;
 //	iec104_slave					*iec104_slave;
 
-	iec104_server				iec104_server;
+//	iec104_server				iec104_server;
 } Transl_Config_TypeDef;
 
 
 
 
 
-Transl_Config_TypeDef* read_config_file(const char *filename);
+bool read_config_file(const char *filename,Transl_Config_TypeDef *config ,iec104_server *iec104_server);
 
 
 #endif /* EXT_CONFIGS_H_ */

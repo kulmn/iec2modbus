@@ -19,8 +19,9 @@ void sigint_handler(int signalId)
 
 int main(int argc, char *argv[])
 {
-	Transl_Config_TypeDef	*config;
-	CS104_Slave slave = NULL;
+	Transl_Config_TypeDef	config;
+	iec104_server			iec104_server;
+//	CS104_Slave slave = NULL;
 
 	moxa_buzzer(100);
 	bool mb_debug = false, iec_debug = false;
@@ -39,8 +40,8 @@ int main(int argc, char *argv[])
 
 
 	// read main config
-	config = read_config_file("config.json" );
-	if (config == NULL)
+
+	if (! read_config_file("config.json",&config ,&iec104_server ))
 	{
 		slog_error( "Config file load failed.");
 		exit(EXIT_FAILURE );
@@ -48,8 +49,8 @@ int main(int argc, char *argv[])
 
 	SlogConfig pCfg;
 	slog_config_get(&pCfg);
-	pCfg.nLogLevel = config->log_level;
-	pCfg.nFileLevel = config->log_level;
+	pCfg.nLogLevel = config.log_level;
+	pCfg.nFileLevel = config.log_level;
 	slog_config_set(&pCfg);
 
 /*
@@ -68,21 +69,22 @@ int main(int argc, char *argv[])
 
 
 	// start modbus master
-	for (uint8_t i = 0; i < config->num_ports; i++)
+	for (uint8_t i = 0; i < config.num_ports; i++)
 	{
-		if (Modbus_Init(&config->serialport[i], mb_debug) == 0)
+		if (Modbus_Init(&config.serialport[i], mb_debug) == 0)
 		{
-			Modbus_Thread_Start(&config->serialport[i] );
-			slog_info( "Start modbus on serial port %s", config->serialport[i].device);
+			Modbus_Thread_Start(&config.serialport[i] );
+			slog_info( "Start modbus on serial port %s", config.serialport[i].device);
 		}
 		 else
-			 slog_warn("Modbus master on serial port %s not started ",config->serialport[i].device );
+			 slog_warn("Modbus master on serial port %s not started ",config.serialport[i].device );
 	}
 
 
-	slave = iec104_server_init(&config->iec104_server, iec_debug);
-	CS104_Slave_start(slave );
-	if (CS104_Slave_isRunning(slave ) == false)
+	//slave = iec104_server_init(&config->iec104_server, iec_debug);
+	iec104_server.server = iec104_server_init(&iec104_server, iec_debug);
+	CS104_Slave_start(iec104_server.server );
+	if (CS104_Slave_isRunning(iec104_server.server ) == false)
 	{
 		slog_error( "Starting iec104 server failed!");
 		exit(EXIT_FAILURE );
@@ -95,11 +97,11 @@ int main(int argc, char *argv[])
 	int iec_send_timer = 0;
 	while (running)
 	{
-		iec104_send_changed_data(slave, &config->iec104_server, cfg_prior_hight);
-		if (iec_send_timer == config->iec104_server.iec104_send_rate)
+		iec104_send_changed_data(iec104_server.server, &iec104_server, cfg_prior_hight);
+		if (iec_send_timer == iec104_server.iec104_send_rate)
 		{
-			iec104_send_changed_data(slave, &config->iec104_server, cfg_prior_low);
-			iec104_send_moxa_dio( slave);
+			iec104_send_changed_data(iec104_server.server, &iec104_server, cfg_prior_low);
+			iec104_send_moxa_dio( iec104_server.server);
 			iec_send_timer = 0;
 		}
 		iec_send_timer++;
@@ -107,15 +109,16 @@ int main(int argc, char *argv[])
 	}
 
 	slog_info( "Stop iec104 server");
-	CS104_Slave_stop(slave );
-	CS104_Slave_destroy(slave );
+	CS104_Slave_stop(iec104_server.server );
+	CS104_Slave_destroy(iec104_server.server );
 
-	for (uint8_t i = 0; i < config->num_ports; i++)
+	for (uint8_t i = 0; i < config.num_ports; i++)
 	{
-		slog_info( "Stop modbus on serial port %s", config->serialport[i].device);
-		Modbus_Thread_Stop(&config->serialport[i]);
+		slog_info( "Stop modbus on serial port %s", config.serialport[i].device);
+		Modbus_Thread_Stop(&config.serialport[i]);
 	}
 
+<<<<<<< HEAD
 
 	for (int i = 0; i < config->num_ports; i++)	// Serial ports num
 	{
@@ -163,6 +166,9 @@ int main(int argc, char *argv[])
 	free(config);
 
 
+=======
+	free_all_memory(&config, &iec104_server);
+>>>>>>> 92f0350 (add parse_slave_iec104_config and parse_slave_modbus_config)
 
 	slog_warn( "Stop programm. \n");
 
