@@ -11,6 +11,7 @@ static bool running = true;
 
 
 
+
 void sigint_handler(int signalId)
 {
     running = false;
@@ -79,7 +80,7 @@ int main(int argc, char *argv[])
 	}
 
 
-	slave = iec104_server_init(config, iec_debug);
+	slave = iec104_server_init(&config->iec104_server, iec_debug);
 	CS104_Slave_start(slave );
 	if (CS104_Slave_isRunning(slave ) == false)
 	{
@@ -94,10 +95,10 @@ int main(int argc, char *argv[])
 	int iec_send_timer = 0;
 	while (running)
 	{
-		iec104_send_changed_data(slave, config, cfg_prior_hight);
-		if (iec_send_timer == config->iec104_send_rate)
+		iec104_send_changed_data(slave, &config->iec104_server, cfg_prior_hight);
+		if (iec_send_timer == config->iec104_server.iec104_send_rate)
 		{
-			iec104_send_changed_data(slave, config, cfg_prior_low);
+			iec104_send_changed_data(slave, &config->iec104_server, cfg_prior_low);
 			iec104_send_moxa_dio( slave);
 			iec_send_timer = 0;
 		}

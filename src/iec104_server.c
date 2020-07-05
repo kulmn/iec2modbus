@@ -201,7 +201,7 @@ int iec104_create_asdu(iec104_command *cmd, CS101_ASDU asdu)
 }
 
 
-int iec104_send_changed_data(CS104_Slave slave, Transl_Config_TypeDef *config, cfg_iec_prior priority)
+int iec104_send_changed_data(CS104_Slave slave, iec104_server *config, cfg_iec_prior priority)
 {
 	CS101_AppLayerParameters alParams;
 	/* get the connection parameters - we need them to create correct ASDUs */
@@ -368,7 +368,7 @@ bool iec104_receive_cmd(iec104_command *cmd, InformationObject io, CS101_ASDU as
 
 
 /*************************************************************************************/
-static iec104_command* find_iec_cmd(Transl_Config_TypeDef *config, InformationObject io, TypeID type_id, int common_addr, uint8_t N_cmd)
+static iec104_command* find_iec_cmd(iec104_server *config, InformationObject io, TypeID type_id, int common_addr, uint8_t N_cmd)
 {
 	int ioa_addr = InformationObject_getObjectAddress(io );
 	iec104_command *find_cmd_ptr[MAX_CMD_CNT];
@@ -379,10 +379,10 @@ static iec104_command* find_iec_cmd(Transl_Config_TypeDef *config, InformationOb
 
 	for (int j = 0; j < config->iec104_slave_num; j++)
 	{
-		uint8_t mb_addr = config->iec104_slave[j].iec_asdu_addr;
+		uint8_t asdu_addr = config->iec104_slave[j].iec_asdu_addr;
 		for (int x = 0; x < config->iec104_slave[j].iec104_write_cmd_num;  x++)	// slave write commands number
 		{
-			if ((common_addr == mb_addr) && (ioa_addr == config->iec104_slave[j].iec104_write_cmds[x].iec_ioa_addr) && (type_id == config->iec104_slave[j].iec104_write_cmds[x].iec_func))
+			if ((common_addr == asdu_addr) && (ioa_addr == config->iec104_slave[j].iec104_write_cmds[x].iec_ioa_addr) && (type_id == config->iec104_slave[j].iec104_write_cmds[x].iec_func))
 			{
 				find_cmd_ptr[cmd_cnt++] = &config->iec104_slave[j].iec104_write_cmds[x];
 				if (cmd_cnt >= MAX_CMD_CNT) return NULL;
@@ -415,7 +415,7 @@ static bool iec104_set_time(IMasterConnection connection, CS101_ASDU asdu)
 
 
 
-static bool interrogation_command(Transl_Config_TypeDef *config, IMasterConnection connection, CS101_ASDU asdu)
+static bool interrogation_command(iec104_server *config, IMasterConnection connection, CS101_ASDU asdu)
 {
 	CS101_ASDU newAsdu = NULL;
 	CS101_AppLayerParameters alParams = IMasterConnection_getApplicationLayerParameters(connection );
@@ -460,7 +460,7 @@ static bool interrogation_command(Transl_Config_TypeDef *config, IMasterConnecti
 
 static bool asduHandler(void *parameter, IMasterConnection connection, CS101_ASDU asdu)
 {
-	Transl_Config_TypeDef *config = (Transl_Config_TypeDef*) parameter;
+	iec104_server *config = (iec104_server*) parameter;
 	bool	rc = false;
 
 	iec104_command *write_cmd = NULL;
@@ -556,7 +556,7 @@ static void connectionEventHandler(void* parameter, IMasterConnection con, CS104
 
 
 
-CS104_Slave iec104_server_init( Transl_Config_TypeDef *config, bool debug )
+CS104_Slave iec104_server_init( iec104_server *config, bool debug )
 {
 	CS104_Slave slave = NULL;
 

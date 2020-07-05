@@ -8,17 +8,21 @@
 #ifndef EXT_CONFIGS_H_
 #define EXT_CONFIGS_H_
 
-#include <stdio.h>
+
 #include <string.h>
 
 #include "cs101_slave.h"
 #include "hal_thread.h"
+#include "memory.h"
 #include "libmodbus/modbus.h"
+#include "iec104_server.h"
 
+/*
 // define for set state on/off
 #define SP_STATE_NO 0
 #define SP_STATE_ON 1
 #define SP_STATE_OFF 2
+*/
 
 typedef enum
 {
@@ -44,6 +48,7 @@ typedef enum
     cfg_iec_size
 } cfg_iec_data;
 
+/*
 typedef enum
 {
 	cfg_btsw_dcba = 0,
@@ -57,13 +62,14 @@ typedef enum
 	cfg_onoff_state = 0,
 	cfg_onoff_value
 } cfg_on_off;
-
+*/
 
 typedef struct  {
 	char*		func_str;
 	TypeID		func_n;
 } cfg_iec_func;
 
+/*
 typedef enum  {
 	cfg_prior_low =0,
 	cfg_prior_hight,
@@ -87,26 +93,6 @@ typedef struct  {
 } iec_add_params;
 
 
-typedef enum  {
-	data_bool =0,
-	data_uint16,
-	data_uint32,
-} data_type;
-
-typedef enum  {
-	mem_init =0,
-	mem_cur,
-	mem_new,
-	mem_chg,
-	mem_err
-} data_state;
-
-typedef struct  {
-	uint8_t				mem_size;
-	data_type			mem_type;
-	data_state			mem_state;
-	uint8_t				*mem_ptr;
-}data_mem;
 
 
 typedef struct  {
@@ -116,6 +102,7 @@ typedef struct  {
 	iec_add_params		add_params;
 	data_mem			*value;
 } iec104_command;
+*/
 
 typedef struct  {
 	uint8_t				mb_func;
@@ -124,7 +111,7 @@ typedef struct  {
 	data_mem			*value;
 }modbus_command;
 
-
+/*
 typedef struct  {
 	uint16_t					iec_asdu_addr;
 	uint8_t					iec104_read_cmd_num;
@@ -132,7 +119,7 @@ typedef struct  {
 	uint8_t					iec104_write_cmd_num;
 	iec104_command 		*iec104_write_cmds;
 } iec104_slave;
-
+*/
 
 typedef struct  {
 	uint8_t					mb_slave_addr;
@@ -160,14 +147,20 @@ typedef struct  {
 	uint8_t						num_slaves;
 } Serial_Port_TypeDef;
 
+
+
+
+
 typedef struct  {
 	uint8_t						log_level;
-	uint16_t						iec104_send_rate;
+//	uint16_t						iec104_send_rate;
 	Serial_Port_TypeDef			*serialport;
 	uint8_t						num_ports;
 
-	uint16_t						iec104_slave_num;
-	iec104_slave					*iec104_slave;
+//	uint16_t						iec104_slave_num;
+//	iec104_slave					*iec104_slave;
+
+	iec104_server				iec104_server;
 } Transl_Config_TypeDef;
 
 

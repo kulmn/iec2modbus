@@ -32,6 +32,7 @@
 #include "ext_configs.h"
 #include "iec104_server.h"
 #include "modbus_m.h"
+#include "memory.h"
 #include "slog.h"
 
 #include "moxa_dev.h"
