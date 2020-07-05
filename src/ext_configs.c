@@ -200,14 +200,6 @@ bool read_json_file(const char *filename, struct json_object **parsed_json)
 
 	fread(buffer, 1, f_size, fp );
 
-
-/*
-	json_object *jobj = NULL;
-	const char *mystring = NULL;
-	int stringlen = 0;
-	enum json_tokener_error jerr;
-*/
-
 	*parsed_json = json_tokener_parse((const char *)buffer );				// parse read file
 	if(*parsed_json == NULL) return false;
 	free(buffer );
@@ -338,77 +330,9 @@ bool parse_iec104_read_cmd(struct json_object *cur_cmd, iec104_command *read_cmd
 		parse_iec_add_params( add_parm_json , read_cmd );
 	}
 
-
 	return true;
 }
 
-/*
-bool parse_read_command(struct json_object *cur_cmd, Command_TypeDef *read_cmd )
-{
-	const char *str;
-	struct json_object *tmp_json=NULL, *mb_data_json=NULL, *iec_data_json=NULL;
-
-	json_object_object_get_ex(cur_cmd, "modbus_data", &mb_data_json );
-	// parse modbus function code
-	tmp_json = json_object_array_get_idx(mb_data_json, cfg_mb_function);
-	str = json_object_get_string(tmp_json);
-
-	if ( !strcmp(str, "04_read_input") )  read_cmd->mb_func = MODBUS_FC_READ_INPUT_REGISTERS;
-	else if ( !strcmp(str, "03_read_holding") ) read_cmd->mb_func = MODBUS_FC_READ_HOLDING_REGISTERS;
-	else if ( !strcmp(str, "02_read_discrete") ) read_cmd->mb_func = MODBUS_FC_READ_DISCRETE_INPUTS;
-	else if ( !strcmp(str, "01_read_coils") ) read_cmd->mb_func = MODBUS_FC_READ_COILS;
-	else
-	{
-		slog_error( "Wrong modbus read function: '%s' .", str);
-		return false;
-	}
-
-	// parse modbus data address
-	tmp_json = json_object_array_get_idx(mb_data_json, cfg_mb_address);
-	str = json_object_get_string(tmp_json);
-	read_cmd->mb_data_addr = strtol(str, NULL, 0);
-	// parse modbus data size
-	tmp_json = json_object_array_get_idx(mb_data_json, cfg_mb_size);
-	read_cmd->mb_data_size = json_object_get_int(tmp_json);
-
-	json_object_object_get_ex(cur_cmd, "iec104_data", &iec_data_json );
-	// parse iec104 function code
-	tmp_json = json_object_array_get_idx(iec_data_json, cfg_iec_function);
-	str = json_object_get_string(tmp_json);
-
-	size_t iec_fn_str_len = sizeof(iec_read_fn_str) / sizeof(iec_read_fn_str[0]);
-	read_cmd->iec_func = 0;
-	for (int fn=0; fn< iec_fn_str_len; fn++)
-	{
-		if ( !strcmp(str, iec_read_fn_str[fn].func_str) ) read_cmd->iec_func = iec_read_fn_str[fn].func_n;
-	}
-	if (read_cmd->iec_func == 0)
-	{
-		slog_error( "Wrong iec104 read function: '%s' .", str);
-		return false;
-	}
-	// parse iec104 ioa address
-	tmp_json = json_object_array_get_idx(iec_data_json, cfg_iec_ioa_addr);
-	str = json_object_get_string(tmp_json);
-	read_cmd->iec_ioa_addr = strtol(str, NULL, 0);
-
-	// parse iec104  size
-	tmp_json = json_object_array_get_idx(iec_data_json, cfg_iec_size);
-	read_cmd->iec_size = json_object_get_int(tmp_json);
-
-	// Additional parameters
-	struct json_object *add_parm_json=NULL;
-	if (json_object_object_get_ex(cur_cmd, "add_param", &add_parm_json ))
-	{
-		parse_iec_add_params( add_parm_json , read_cmd );
-	}
-
-	// Allocate and initialize the memory to store the registers
-	if (! allocate_read_cmd_memory(read_cmd)) return false;
-
-	return true;
-}
-*/
 
 int parse_modbus_write_cmd(struct json_object *cur_cmd, modbus_command *write_cmd )
 {
@@ -479,66 +403,6 @@ int parse_iec104_write_cmd(struct json_object *cur_cmd, iec104_command *write_cm
 	return true;
 }
 
-/*
-int parse_write_command(struct json_object *cur_cmd, Command_TypeDef *write_cmd )
-{
-	const char *str;
-	struct json_object *tmp_json=NULL, *mb_data_json=NULL, *iec_data_json=NULL;
-
-	json_object_object_get_ex(cur_cmd, "modbus_data", &mb_data_json );
-
-	// parse function code
-	tmp_json = json_object_array_get_idx(mb_data_json, cfg_mb_function);
-	str = json_object_get_string(tmp_json);
-	if ( !strcmp(str, "06_write_singl_holding") ) write_cmd->mb_func = MODBUS_FC_WRITE_SINGLE_REGISTER;
-	else if ( !strcmp(str, "16_write_multiple_holding") ) write_cmd->mb_func = MODBUS_FC_WRITE_MULTIPLE_REGISTERS;
-	else if ( !strcmp(str, "05_write_singl_coil") ) write_cmd->mb_func = MODBUS_FC_WRITE_SINGLE_COIL;
-//	else if ( !strcmp(str, "write_multiple_coil") ) write_cmd->mb_func = MODBUS_FC_WRITE_MULTIPLE_COILS;
-	else
-	{
-		slog_error( "Wrong modbus write function: '%s' .", str);
-		return false;
-	}
-
-	// parse modbus data address
-	tmp_json = json_object_array_get_idx(mb_data_json, cfg_mb_address);
-	str = json_object_get_string(tmp_json);
-	write_cmd->mb_data_addr = strtol(str, NULL, 0);
-
-	json_object_object_get_ex(cur_cmd, "iec104_data", &iec_data_json );
-	// parse iec104 function code
-	tmp_json = json_object_array_get_idx(iec_data_json, cfg_iec_function);
-	str = json_object_get_string(tmp_json);
-
-	size_t iec_fn_str_len = sizeof(iec_write_fn_str) / sizeof(iec_write_fn_str[0]);
-	write_cmd->iec_func = 0;
-	for (int fn=0; fn< iec_fn_str_len; fn++)
-	{
-		if ( !strcmp(str, iec_write_fn_str[fn].func_str) ) write_cmd->iec_func = iec_write_fn_str[fn].func_n;
-	}
-	if (write_cmd->iec_func == 0)
-	{
-		slog_error( "Wrong iec104 write function: '%s' .", str);
-		return false;
-	}
-	// parse iec104 ioa address
-	tmp_json = json_object_array_get_idx(iec_data_json, cfg_iec_ioa_addr);
-	str = json_object_get_string(tmp_json);
-	write_cmd->iec_ioa_addr = strtol(str, NULL, 0);
-
-	// Additional parameters
-	struct json_object *add_parm_json=NULL;
-	if (json_object_object_get_ex(cur_cmd, "add_param", &add_parm_json ))
-	{
-		parse_iec_add_params( add_parm_json , write_cmd );
-	}
-
-	// Allocate and initialize the memory to store the registers
-	if (! allocate_write_cmd_memory(write_cmd)) return false;
-
-	return true;
-}
-*/
 
 bool parse_slave_config_file(const char *filename,Modbus_Slave_TypeDef *mb_slave, iec104_slave *iec_slave )
 {
@@ -569,7 +433,6 @@ bool parse_slave_config_file(const char *filename,Modbus_Slave_TypeDef *mb_slave
 	}
 	for (uint8_t i = 0; i < iec_slave->iec104_read_cmd_num; i++)
 	{
-//		iec_slave->iec104_read_cmds[i].iec_asdu_addr = mb_slave->mb_slave_addr;
 		cur_cmd = json_object_array_get_idx(read_cmd_json, i );
 		if ( ! parse_iec104_read_cmd( cur_cmd, &iec_slave->iec104_read_cmds[i]) )
 		{
@@ -596,7 +459,6 @@ bool parse_slave_config_file(const char *filename,Modbus_Slave_TypeDef *mb_slave
 	}
 	for (int i = 0; i < iec_slave->iec104_write_cmd_num; i++)
 	{
-//		iec_slave->iec104_write_cmds[i].iec_asdu_addr = mb_slave->mb_slave_addr;
 		cur_cmd = json_object_array_get_idx(write_cmd_json, i );
 		if ( ! parse_iec104_write_cmd( cur_cmd, &iec_slave->iec104_write_cmds[i]) )
 		{
@@ -705,23 +567,6 @@ Transl_Config_TypeDef* read_config_file(const char *filename)
 		config->serialport[i].mb_slave = (Modbus_Slave_TypeDef*) malloc(config->serialport[i].num_slaves * sizeof(Modbus_Slave_TypeDef) );
 
 		config->iec104_slave_num += config->serialport[i].num_slaves;
-/*
-		for (int j = 0; j < config->serialport[i].num_slaves; j++)
-		{
-			cur_slave = json_object_array_get_idx(mb_slaves, j);
-			// slave addr
-			json_object_object_get_ex(cur_slave, "mb_slave_address", &tmp_json );
-			config->serialport[i].mb_slave[j].mb_slave_addr = json_object_get_int(tmp_json);
-			// slave config file
-			json_object_object_get_ex(cur_slave, "mb_slave_config_file", &tmp_json );
-			str = json_object_get_string(tmp_json);
-			if ( !parse_slave_config_file(str, &config->serialport[i].mb_slave[j]))
-			{
-				slog_error( " Loading : 'serial_ports:%d\\mb_slave:%d\\mb_slave_config_file: %s'  failed. ", i, j,str );
-				return NULL;
-			}
-		}
-*/
 	}
 
 	config->iec104_slave = (iec104_slave*) malloc(config->iec104_slave_num * sizeof(iec104_slave) );
@@ -733,8 +578,6 @@ Transl_Config_TypeDef* read_config_file(const char *filename)
 
 		// parse modbus slaves param
 		json_object_object_get_ex(cur_port, "mb_slave", &mb_slaves );
-//		config->serialport[i].num_slaves = json_object_array_length(mb_slaves );
-//		config->serialport[i].mb_slave = (Modbus_Slave_TypeDef*) malloc(config->serialport[i].num_slaves * sizeof(Modbus_Slave_TypeDef) );
 
 		for (int j = 0; j < config->serialport[i].num_slaves; j++)
 		{

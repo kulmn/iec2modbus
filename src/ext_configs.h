@@ -112,7 +112,6 @@ typedef struct  {
 typedef struct  {
 	TypeID				iec_func;
 	uint16_t				iec_ioa_addr;
-//	uint16_t				iec_asdu_addr;
 	uint8_t				iec_size;
 	iec_add_params		add_params;
 	data_mem			*value;
@@ -136,24 +135,11 @@ typedef struct  {
 
 
 typedef struct  {
-	uint8_t		mb_slave_addr;
-//	uint16_t		mb_poll_time;
-
+	uint8_t					mb_slave_addr;
 	uint8_t					mb_read_cmd_num;
 	modbus_command		*mb_read_cmds;
 	uint8_t					mb_write_cmd_num;
 	modbus_command		*mb_write_cmds;
-
-//	uint8_t					iec104_read_cmd_num;
-//	iec104_command 		*iec104_read_cmds;
-//	uint8_t					iec104_write_cmd_num;
-//	iec104_command 		*iec104_write_cmds;
-
-
-//	uint8_t		read_cmnds_num;
-//	Command_TypeDef		*read_cmnds;
-//	uint8_t		write_cmnds_num;
-//	Command_TypeDef		*write_cmnds;
 } Modbus_Slave_TypeDef;
 
 

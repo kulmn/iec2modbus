@@ -9,10 +9,7 @@
 static bool running = true;
 
 
-<<<<<<< HEAD
-=======
 
->>>>>>> 9e7bd4d (new iec104_slave[] array for iec commands)
 
 void sigint_handler(int signalId)
 {

@@ -95,7 +95,6 @@ int iec104_uint32_asdu(iec104_command *cmd, CS101_ASDU asdu)
 		if (cmd->value->mem_state == mem_err) quality = IEC60870_QUALITY_INVALID;
 
 		uint16_t ioa = cmd->iec_ioa_addr;
-//		uint8_t num_ioa = (cmd->mb_data_size * sizeof(uint16_t)) / (sizeof(uint32_t));
 		uint16_t *data_ptr = (uint16_t*) cmd->value->mem_ptr;
 		for (int i = 0; i < num_ioa; i++)
 		{
@@ -111,7 +110,6 @@ int iec104_uint32_asdu(iec104_command *cmd, CS101_ASDU asdu)
 			memcpy(&value, &data, sizeof(uint32_t));
 
 			io = (InformationObject) MeasuredValueShort_create(NULL, ioa++, value, quality);
-//			io = (InformationObject) BitString32_create(NULL, ioa++, data );
 			InformationObject_setType(io, cmd->iec_func );
 			CS101_ASDU_addInformationObject(asdu, io );
 			data_ptr += (sizeof(uint32_t));
@@ -135,7 +133,6 @@ int iec104_uint16_asdu(iec104_command *cmd, CS101_ASDU asdu)
 	{
 		InformationObject io = NULL;
 		uint16_t ioa = cmd->iec_ioa_addr;
-//		uint8_t num_ioa = (cmd->mb_data_size * sizeof(uint16_t)) / (sizeof(uint16_t));
 		uint16_t *data_ptr = (uint16_t*) cmd->value->mem_ptr;
 		for (int i = 0; i < num_ioa; i++)
 		{
@@ -211,42 +208,26 @@ int iec104_send_changed_data(CS104_Slave slave, Transl_Config_TypeDef *config, c
 	alParams = CS104_Slave_getAppLayerParameters(slave );
 	CS101_ASDU newAsdu;
 
-
-//	for (int i = 0; i < config->num_ports; i++)
-//	{
-		for (int j = 0; j < config->iec104_slave_num; j++)
+	for (int j = 0; j < config->iec104_slave_num; j++)
+	{
+		int ca_addr = config->iec104_slave[j].iec_asdu_addr;
+		for (int x = 0; x < config->iec104_slave[j].iec104_read_cmd_num;  x++)
 		{
-			//int ca_addr = config->serialport[i].mb_slave[j].mb_slave_addr;
-			int ca_addr = config->iec104_slave[j].iec_asdu_addr;
-			for (int x = 0; x < config->iec104_slave[j].iec104_read_cmd_num; x++)
-			{
-//				int ca_addr = config->iec104_slave[j].iec104_read_cmds[x].iec_asdu_addr;
-				data_state	mem_state = config->iec104_slave[j].iec104_read_cmds[x].value->mem_state;
-				cfg_iec_prior  iec_priority = config->iec104_slave[j].iec104_read_cmds[x].add_params.priority;
+			data_state mem_state = config->iec104_slave[j].iec104_read_cmds[x].value->mem_state;
+			cfg_iec_prior iec_priority = config->iec104_slave[j].iec104_read_cmds[x].add_params.priority;
 
-				if (    ( (mem_state == mem_chg ) && iec_priority == priority && priority == cfg_prior_hight)
-						|| ( mem_state != mem_init && priority== cfg_prior_low) )
+			if (((mem_state == mem_chg) && iec_priority == priority && priority == cfg_prior_hight) || (mem_state != mem_init && priority == cfg_prior_low))
+			{
+				newAsdu = CS101_ASDU_create(alParams, false, CS101_COT_SPONTANEOUS, 0, ca_addr, false, false );
+				if (iec104_create_asdu(&config->iec104_slave[j].iec104_read_cmds[x], newAsdu ) == 0)
 				{
-					newAsdu = CS101_ASDU_create(alParams, false, CS101_COT_SPONTANEOUS, 0, ca_addr, false, false );
-					if (iec104_create_asdu(&config->iec104_slave[j].iec104_read_cmds[x], newAsdu ) == 0)
-					{
-						CS104_Slave_enqueueASDU(slave, newAsdu );
-						if (mem_state != mem_err)
-							config->iec104_slave[j].iec104_read_cmds[x].value->mem_state = mem_cur;
-/*
-						InformationObject io = CS101_ASDU_getElement(newAsdu, 0 );
-						int ioa_addr = InformationObject_getObjectAddress(io );
-						slog_debug("Send data:  ID=%s, CA=%d, IOA=%d",
-									TypeID_toString(config->serialport[i].mb_slave[j].read_cmnds[x].iec_func),
-									config->serialport[i].mb_slave[j].mb_slave_addr, ioa_addr	);
-*/
-					}
-					CS101_ASDU_destroy(newAsdu );
+					CS104_Slave_enqueueASDU(slave, newAsdu );
+					if (mem_state != mem_err) config->iec104_slave[j].iec104_read_cmds[x].value->mem_state = mem_cur;
 				}
+				CS101_ASDU_destroy(newAsdu );
 			}
 		}
-//	}
-
+	}
 	return 0;
 }
 
@@ -310,7 +291,6 @@ void iec104_receive_uint32(iec104_command* cmd,  InformationObject io)
 	uint16_t *data_ptr = (uint16_t *) cmd->value->mem_ptr;
 	uint32_t data = Bitstring32Command_getValue((Bitstring32Command) io);
 
-
 	switch(cmd->add_params.byte_swap)
 	{
 		case cfg_btsw_abcd:
@@ -340,7 +320,6 @@ void iec104_receive_uint32(iec104_command* cmd,  InformationObject io)
 	}
 
 	cmd->value->mem_state = mem_new;
-
 }
 
 
@@ -389,34 +368,29 @@ bool iec104_receive_cmd(iec104_command *cmd, InformationObject io, CS101_ASDU as
 
 
 /*************************************************************************************/
-static iec104_command* find_iec_cmd(Transl_Config_TypeDef *config, InformationObject io ,TypeID type_id, int common_addr, uint8_t N_cmd)
+static iec104_command* find_iec_cmd(Transl_Config_TypeDef *config, InformationObject io, TypeID type_id, int common_addr, uint8_t N_cmd)
 {
 	int ioa_addr = InformationObject_getObjectAddress(io );
-	iec104_command *find_cmd_ptr[MAX_CMD_CNT] ;
+	iec104_command *find_cmd_ptr[MAX_CMD_CNT];
 	uint8_t cmd_cnt = 0;
 
-	for (int i = 0; i < MAX_CMD_CNT; i++)	find_cmd_ptr[i] = NULL;
+	for (int i = 0; i < MAX_CMD_CNT; i++)
+		find_cmd_ptr[i] = NULL;
 
-//	for (int i = 0; i < config->num_ports; i++)
-//	{
-		for (int j = 0; j < config->iec104_slave_num; j++)
+	for (int j = 0; j < config->iec104_slave_num; j++)
+	{
+		uint8_t mb_addr = config->iec104_slave[j].iec_asdu_addr;
+		for (int x = 0; x < config->iec104_slave[j].iec104_write_cmd_num;  x++)	// slave write commands number
 		{
-			//uint8_t mb_addr =  config->serialport[i].mb_slave[j].mb_slave_addr;
-			uint8_t mb_addr =  config->iec104_slave[j].iec_asdu_addr;
-			for (int x = 0;x < config->iec104_slave[j].iec104_write_cmd_num;  x++)	// Modbus slave read commands num
+			if ((common_addr == mb_addr) && (ioa_addr == config->iec104_slave[j].iec104_write_cmds[x].iec_ioa_addr) && (type_id == config->iec104_slave[j].iec104_write_cmds[x].iec_func))
 			{
-//				uint8_t mb_addr =  config->iec104_slave[j].iec104_write_cmds[x].iec_asdu_addr;
-				if ( (common_addr == mb_addr) && (ioa_addr == config->iec104_slave[j].iec104_write_cmds[x].iec_ioa_addr) && \
-						(type_id == config->iec104_slave[j].iec104_write_cmds[x].iec_func) )
-				{
-					find_cmd_ptr[cmd_cnt++] = &config->iec104_slave[j].iec104_write_cmds[x];
-					if (cmd_cnt >= MAX_CMD_CNT) return NULL;
-				}
+				find_cmd_ptr[cmd_cnt++] = &config->iec104_slave[j].iec104_write_cmds[x];
+				if (cmd_cnt >= MAX_CMD_CNT) return NULL;
 			}
 		}
-//	}
+	}
 
-	if (N_cmd >=MAX_CMD_CNT) N_cmd = 0;
+	if (N_cmd >= MAX_CMD_CNT) N_cmd = 0;
 
 	return find_cmd_ptr[N_cmd];
 }
@@ -449,45 +423,35 @@ static bool interrogation_command(Transl_Config_TypeDef *config, IMasterConnecti
 	InterrogationCommand irc = (InterrogationCommand) CS101_ASDU_getElement(asdu, 0 );
 	if (irc == NULL)
 	{
-		slog_warn("Wrong ASDU received");
+		slog_warn("Wrong ASDU received" );
 		return false;
 	}
-	uint8_t qoi = InterrogationCommand_getQOI(irc);
+	uint8_t qoi = InterrogationCommand_getQOI(irc );
 
-	slog_info("Received interrogation for group %i", qoi);
+	slog_info("Received interrogation for group %i", qoi );
 
 	if (qoi == IEC60870_QOI_STATION)
 	{ // only handle station interrogation
 		IMasterConnection_sendACT_CON(connection, asdu, false );
 
-//		for (int i = 0; i < config->num_ports; i++)
-//		{
-			for (int j = 0; j < config->iec104_slave_num; j++)
+		for (int j = 0; j < config->iec104_slave_num; j++)
+		{
+			uint8_t mb_addr = config->iec104_slave[j].iec_asdu_addr;
+			for (int x = 0; x < config->iec104_slave[j].iec104_read_cmd_num;  x++)	// slave read commands number
 			{
-//				uint8_t mb_addr =  config->serialport[i].mb_slave[j].mb_slave_addr;
-				uint8_t mb_addr =  config->iec104_slave[j].iec_asdu_addr;
-				for (int x = 0;x < config->iec104_slave[j].iec104_read_cmd_num;  x++)	// Modbus slave read commands num
+				newAsdu = CS101_ASDU_create(alParams, false, CS101_COT_INTERROGATED_BY_STATION, 0, mb_addr, false, false );
+				if ((config->iec104_slave[j].iec104_read_cmds[x].value->mem_state != mem_init) || config->iec104_slave[j].iec104_read_cmds[x].value->mem_state != mem_err)
 				{
-//					uint8_t mb_addr =  config->iec104_slave[j].iec104_read_cmds[x].iec_asdu_addr;
-					newAsdu = CS101_ASDU_create(alParams, false, CS101_COT_INTERROGATED_BY_STATION, 0, mb_addr, false, false );
-					if ( (config->iec104_slave[j].iec104_read_cmds[x].value->mem_state != mem_init) || \
-							config->iec104_slave[j].iec104_read_cmds[x].value->mem_state != mem_err)
-					{
-						if (iec104_create_asdu(&config->iec104_slave[j].iec104_read_cmds[x],  newAsdu) == 0)
-						{
-							IMasterConnection_sendASDU(connection, newAsdu );
-						}
-					}
-					CS101_ASDU_destroy(newAsdu );
+					if (iec104_create_asdu(&config->iec104_slave[j].iec104_read_cmds[x], newAsdu ) == 0)
+						IMasterConnection_sendASDU(connection, newAsdu );
 				}
+				CS101_ASDU_destroy(newAsdu );
 			}
-//		}
+		}
 
 		IMasterConnection_sendACT_TERM(connection, asdu );
 	} else
-	{
 		IMasterConnection_sendACT_CON(connection, asdu, true );
-	}
 
 	return true;
 }
