@@ -166,7 +166,7 @@ int main(int argc, char *argv[])
 
 	slog_warn( "Stop programm. \n");
 
-	Thread_sleep(500 );
+	Thread_sleep(50 );
 	return 0;
 }
 

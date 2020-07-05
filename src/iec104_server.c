@@ -368,14 +368,10 @@ bool iec104_receive_cmd(iec104_command *cmd, InformationObject io, CS101_ASDU as
 
 
 /*************************************************************************************/
-static iec104_command* find_iec_cmd(iec104_server *config, InformationObject io, TypeID type_id, int common_addr, uint8_t N_cmd)
+static iec104_command* find_iec_cmd(iec104_server *config, InformationObject io, TypeID type_id, int common_addr)
 {
 	int ioa_addr = InformationObject_getObjectAddress(io );
-	iec104_command *find_cmd_ptr[MAX_CMD_CNT];
-	uint8_t cmd_cnt = 0;
-
-	for (int i = 0; i < MAX_CMD_CNT; i++)
-		find_cmd_ptr[i] = NULL;
+	iec104_command *find_cmd_ptr=NULL;
 
 	for (int j = 0; j < config->iec104_slave_num; j++)
 	{
@@ -384,15 +380,12 @@ static iec104_command* find_iec_cmd(iec104_server *config, InformationObject io,
 		{
 			if ((common_addr == asdu_addr) && (ioa_addr == config->iec104_slave[j].iec104_write_cmds[x].iec_ioa_addr) && (type_id == config->iec104_slave[j].iec104_write_cmds[x].iec_func))
 			{
-				find_cmd_ptr[cmd_cnt++] = &config->iec104_slave[j].iec104_write_cmds[x];
-				if (cmd_cnt >= MAX_CMD_CNT) return NULL;
+				find_cmd_ptr = &config->iec104_slave[j].iec104_write_cmds[x];
 			}
 		}
 	}
 
-	if (N_cmd >= MAX_CMD_CNT) N_cmd = 0;
-
-	return find_cmd_ptr[N_cmd];
+	return find_cmd_ptr;
 }
 
 
@@ -496,19 +489,14 @@ static bool asduHandler(void *parameter, IMasterConnection connection, CS101_ASD
 					slog_warn("Wrong ASDU received");
 					return false;
 				}
-
-				for (uint8_t cmd_num=0; cmd_num < MAX_CMD_CNT; cmd_num++)
+				write_cmd = find_iec_cmd(config, io, type_id, common_addr );
+				if (write_cmd != NULL)
 				{
-					write_cmd = find_iec_cmd(config, io, type_id, common_addr , cmd_num);
-					if (write_cmd != NULL)
+					slog_debug("command found: ioa = %d, ca = %d, type_id = %d ", write_cmd->iec_ioa_addr, common_addr, write_cmd->iec_func );
+					if (iec104_receive_cmd(write_cmd, io, asdu ))
 					{
-						slog_debug("command found: ioa = %d, ca = %d, type_id = %d ", write_cmd->iec_ioa_addr, common_addr, write_cmd->iec_func );
-						if (iec104_receive_cmd(write_cmd, io, asdu ))
-						{
-							IMasterConnection_sendASDU(connection, asdu );
-							rc = true;
-							cmd_num = MAX_CMD_CNT;
-						}
+						IMasterConnection_sendASDU(connection, asdu );
+						rc = true;
 					}
 				}
 				InformationObject_destroy(io );

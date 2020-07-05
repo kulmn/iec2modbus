@@ -34,8 +34,6 @@ const cfg_iec_func iec_write_fn_str[] = {
 
 
 
-
-
 // Just a utility function.
  void print_json_object(struct json_object *jobj, const char *msg)
 {
@@ -493,7 +491,7 @@ Transl_Config_TypeDef* read_config_file(const char *filename)
 	config = (Transl_Config_TypeDef*) malloc(sizeof(Transl_Config_TypeDef) );
 	if (config == NULL)
 	{
-		slog_error( "Allocating memory for config file: '%s' failed.", filename);
+		slog_error( "Allocating memory for config structure failed.");
 		return NULL;
 	}
 
