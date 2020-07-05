@@ -71,13 +71,30 @@ int main(int argc, char *argv[])
 	// start modbus master
 	for (uint8_t i = 0; i < config.num_ports; i++)
 	{
-		if (Modbus_Init(&config.serialport[i], mb_debug) == 0)
+		switch (config.serialport[i].protocol)
 		{
-			Modbus_Thread_Start(&config.serialport[i] );
-			slog_info( "Start modbus on serial port %s", config.serialport[i].device);
+			case cfg_modbus_rtu_m:
+			{
+				if (Modbus_Init(&config.serialport[i], mb_debug ) == 0)
+				{
+					Modbus_Thread_Start(&config.serialport[i] );
+					slog_info("Start modbus on serial port %s", config.serialport[i].device );
+				} else
+					slog_warn("Modbus master on serial port %s not started ", config.serialport[i].device );
+			}break;
+			case cfg_modbus_rtu_s:
+			{
+
+			}break;
+			case cfg_iec_101:
+			{
+
+			}break;
+			case cfg_iec_103:
+			{
+
+			}break;
 		}
-		 else
-			 slog_warn("Modbus master on serial port %s not started ",config.serialport[i].device );
 	}
 
 
@@ -112,63 +129,31 @@ int main(int argc, char *argv[])
 	CS104_Slave_stop(iec104_server.server );
 	CS104_Slave_destroy(iec104_server.server );
 
+	// stop serials protocols
 	for (uint8_t i = 0; i < config.num_ports; i++)
 	{
-		slog_info( "Stop modbus on serial port %s", config.serialport[i].device);
-		Modbus_Thread_Stop(&config.serialport[i]);
-	}
-
-<<<<<<< HEAD
-
-	for (int i = 0; i < config->num_ports; i++)	// Serial ports num
-	{
-		for (int j = 0; j < config->serialport[i].num_slaves; j++)// Modbus slaves num
+		switch (config.serialport[i].protocol)
 		{
-			for (int x = 0; x < config->serialport[i].mb_slave[j].mb_write_cmd_num; x++) // Modbus slave write commands num
+			case cfg_modbus_rtu_m:
 			{
-				free(config->serialport[i].mb_slave[j].mb_write_cmds[x].value->mem_ptr);
-				free(config->serialport[i].mb_slave[j].mb_write_cmds[x].value);
-			}
-		}
-	}
-
-	for (int i = 0; i < config->num_ports; i++)	// Serial ports num
-	{
-		for (int j = 0; j < config->serialport[i].num_slaves; j++)// Modbus slaves num
-		{
-			for (int x = 0; x < config->serialport[i].mb_slave[j].mb_read_cmd_num; x++) // Modbus slave write commands num
+				slog_info( "Stop modbus on serial port %s", config.serialport[i].device);
+				Modbus_Thread_Stop(&config.serialport[i]);
+			}break;
+			case cfg_modbus_rtu_s:
 			{
-				free(config->serialport[i].mb_slave[j].mb_read_cmds[x].value->mem_ptr);
-				free(config->serialport[i].mb_slave[j].mb_read_cmds[x].value);
-			}
+
+			}break;
+			case cfg_iec_101:
+			{
+
+			}break;
+			case cfg_iec_103:
+			{
+
+			}break;
 		}
 	}
 
-
-	for (int i = 0; i < config->num_ports; i++)	// Serial ports num
-	{
-		for (int j = 0; j < config->serialport[i].num_slaves; j++)// Modbus slaves num
-		{
-				free(config->serialport[i].mb_slave[j].mb_read_cmds);
-				free(config->serialport[i].mb_slave[j].mb_write_cmds);
-				free(config->serialport[i].mb_slave[j].iec104_read_cmds);
-				free(config->serialport[i].mb_slave[j].iec104_write_cmds);
-		}
-	}
-
-	for (int i = 0; i < config->num_ports; i++)	// Serial ports num
-	{
-		free(config->serialport[i].mb_slave);
-		free(config->serialport[i].device);
-	}
-
-	free(config->serialport);
-	free(config);
-
-
-=======
-	free_all_memory(&config, &iec104_server);
->>>>>>> 92f0350 (add parse_slave_iec104_config and parse_slave_modbus_config)
 
 	slog_warn( "Stop programm. \n");
 

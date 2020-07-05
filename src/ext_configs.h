@@ -48,6 +48,14 @@ typedef enum
     cfg_iec_size
 } cfg_iec_data;
 
+typedef enum
+{
+    cfg_modbus_rtu_m = 0,
+    cfg_modbus_rtu_s,
+    cfg_iec_101,
+    cfg_iec_103,
+} cfg_ser_protocol;
+
 /*
 typedef enum
 {
@@ -131,17 +139,18 @@ typedef struct  {
 
 
 typedef struct  {
-	char*		device;
-	uint16_t		baud;
-	uint8_t		data_bit;
-	char		parity;
-	uint8_t		stop_bit;
-	uint16_t		recv_timeout;
+	char*						device;
+	uint16_t						baud;
+	uint8_t						data_bit;
+	char						parity;
+	uint8_t						stop_bit;
+	cfg_ser_protocol				protocol;
+	uint16_t						recv_timeout;
 
-	modbus_t	*mb_protocol_ptr;
-	Thread		mb_thread;
-	bool		mb_thread_run;
-	bool		mb_thread_stop;
+	modbus_t					*mb_protocol_ptr;
+	Thread						mb_thread;
+	bool						mb_thread_run;
+	bool						mb_thread_stop;
 
 	Modbus_Slave_TypeDef		*mb_slave;
 	uint8_t						num_slaves;

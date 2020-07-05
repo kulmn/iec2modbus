@@ -614,13 +614,29 @@ bool read_config_file(const char *filename,Transl_Config_TypeDef *config ,iec104
 		tmp_json = json_object_array_get_idx(port_device, cfg_port_stop_bit);
 		config->serialport[i].stop_bit = json_object_get_int(tmp_json);
 
+		// parse protocol
+		json_object_object_get_ex(cur_port, "Protocol", &tmp_json );
+		str = json_object_get_string(tmp_json);
+		if ( !strcmp(str, "modbus_rtu_master") )  config->serialport[i].protocol = cfg_modbus_rtu_m;
+		else if ( !strcmp(str, "modbus_rtu_slave") ) config->serialport[i].protocol = cfg_modbus_rtu_s;
+		else if ( !strcmp(str, "iec_60870-5-101") ) config->serialport[i].protocol = cfg_iec_101;
+		else if ( !strcmp(str, "iec_60870-5-103") ) config->serialport[i].protocol = cfg_iec_103;
+		else
+		{
+			slog_error( "Wrong serial protocol: '%s' .", str);
+			return false;
+		}
+
+		config->serialport[i].recv_timeout = json_object_get_int(tmp_json);
+
+
 		// parse modbus answer timeout
-		json_object_object_get_ex(cur_port, "mb_answer_timeout_ms", &tmp_json );
+		json_object_object_get_ex(cur_port, "answer_timeout_ms", &tmp_json );
 		config->serialport[i].recv_timeout = json_object_get_int(tmp_json);
 
 
 		// parse modbus slaves param
-		json_object_object_get_ex(cur_port, "mb_slave", &mb_slaves );
+		json_object_object_get_ex(cur_port, "slave", &mb_slaves );
 		config->serialport[i].num_slaves= json_object_array_length(mb_slaves );
 		config->serialport[i].mb_slave = (Modbus_Slave_TypeDef*) malloc(config->serialport[i].num_slaves * sizeof(Modbus_Slave_TypeDef) );
 
@@ -635,18 +651,18 @@ bool read_config_file(const char *filename,Transl_Config_TypeDef *config ,iec104
 		cur_port = json_object_array_get_idx(ports, i );
 
 		// parse modbus slaves param
-		json_object_object_get_ex(cur_port, "mb_slave", &mb_slaves );
+		json_object_object_get_ex(cur_port, "slave", &mb_slaves );
 
 		for (int j = 0; j < config->serialport[i].num_slaves; j++)
 		{
 			cur_slave = json_object_array_get_idx(mb_slaves, j );
 			// slave addr
-			json_object_object_get_ex(cur_slave, "mb_slave_address", &tmp_json );
+			json_object_object_get_ex(cur_slave, "slave_address", &tmp_json );
 			int slave_addr = json_object_get_int(tmp_json );
 			config->serialport[i].mb_slave[j].mb_slave_addr = slave_addr;
 			iec104_server->iec104_slave[iec104_slave_cnt].iec_asdu_addr = slave_addr;
 			// slave config file
-			json_object_object_get_ex(cur_slave, "mb_slave_config_file", &tmp_json );
+			json_object_object_get_ex(cur_slave, "slave_config_file", &tmp_json );
 			str = json_object_get_string(tmp_json );
 
 
@@ -663,12 +679,12 @@ bool read_config_file(const char *filename,Transl_Config_TypeDef *config ,iec104
 */
 			if (!parse_slave_iec104_config(parsed_slave_json, &iec104_server->iec104_slave[iec104_slave_cnt++] ))
 			{
-				slog_error(" Loading : 'serial_ports:%d\\mb_slave:%d\\mb_slave_config_file: %s'  failed. ", i, j, str );
+				slog_error(" Loading : 'serial_ports:%d\\slave:%d\\slave_config_file: %s'  failed. ", i, j, str );
 				return false;
 			}
 			if (!parse_slave_modbus_config(parsed_slave_json, &config->serialport[i].mb_slave[j] ))
 			{
-				slog_error(" Loading : 'serial_ports:%d\\mb_slave:%d\\mb_slave_config_file: %s'  failed. ", i, j, str );
+				slog_error(" Loading : 'serial_ports:%d\\slave:%d\\slave_config_file: %s'  failed. ", i, j, str );
 				return false;
 			}
 			json_object_put(parsed_slave_json);	// free
