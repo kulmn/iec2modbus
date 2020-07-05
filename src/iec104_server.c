@@ -217,9 +217,10 @@ int iec104_send_changed_data(CS104_Slave slave, Transl_Config_TypeDef *config, c
 		for (int j = 0; j < config->iec104_slave_num; j++)
 		{
 			//int ca_addr = config->serialport[i].mb_slave[j].mb_slave_addr;
+			int ca_addr = config->iec104_slave[j].iec_asdu_addr;
 			for (int x = 0; x < config->iec104_slave[j].iec104_read_cmd_num; x++)
 			{
-				int ca_addr = config->iec104_slave[j].iec104_read_cmds[x].iec_asdu_addr;
+//				int ca_addr = config->iec104_slave[j].iec104_read_cmds[x].iec_asdu_addr;
 				data_state	mem_state = config->iec104_slave[j].iec104_read_cmds[x].value->mem_state;
 				cfg_iec_prior  iec_priority = config->iec104_slave[j].iec104_read_cmds[x].add_params.priority;
 
@@ -401,9 +402,10 @@ static iec104_command* find_iec_cmd(Transl_Config_TypeDef *config, InformationOb
 		for (int j = 0; j < config->iec104_slave_num; j++)
 		{
 			//uint8_t mb_addr =  config->serialport[i].mb_slave[j].mb_slave_addr;
+			uint8_t mb_addr =  config->iec104_slave[j].iec_asdu_addr;
 			for (int x = 0;x < config->iec104_slave[j].iec104_write_cmd_num;  x++)	// Modbus slave read commands num
 			{
-				uint8_t mb_addr =  config->iec104_slave[j].iec104_write_cmds[x].iec_asdu_addr;
+//				uint8_t mb_addr =  config->iec104_slave[j].iec104_write_cmds[x].iec_asdu_addr;
 				if ( (common_addr == mb_addr) && (ioa_addr == config->iec104_slave[j].iec104_write_cmds[x].iec_ioa_addr) && \
 						(type_id == config->iec104_slave[j].iec104_write_cmds[x].iec_func) )
 				{
@@ -463,9 +465,10 @@ static bool interrogation_command(Transl_Config_TypeDef *config, IMasterConnecti
 			for (int j = 0; j < config->iec104_slave_num; j++)
 			{
 //				uint8_t mb_addr =  config->serialport[i].mb_slave[j].mb_slave_addr;
+				uint8_t mb_addr =  config->iec104_slave[j].iec_asdu_addr;
 				for (int x = 0;x < config->iec104_slave[j].iec104_read_cmd_num;  x++)	// Modbus slave read commands num
 				{
-					uint8_t mb_addr =  config->iec104_slave[j].iec104_read_cmds[x].iec_asdu_addr;
+//					uint8_t mb_addr =  config->iec104_slave[j].iec104_read_cmds[x].iec_asdu_addr;
 					newAsdu = CS101_ASDU_create(alParams, false, CS101_COT_INTERROGATED_BY_STATION, 0, mb_addr, false, false );
 					if ( (config->iec104_slave[j].iec104_read_cmds[x].value->mem_state != mem_init) || \
 							config->iec104_slave[j].iec104_read_cmds[x].value->mem_state != mem_err)

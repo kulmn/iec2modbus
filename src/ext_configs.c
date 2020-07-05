@@ -569,7 +569,7 @@ bool parse_slave_config_file(const char *filename,Modbus_Slave_TypeDef *mb_slave
 	}
 	for (uint8_t i = 0; i < iec_slave->iec104_read_cmd_num; i++)
 	{
-		iec_slave->iec104_read_cmds[i].iec_asdu_addr = mb_slave->mb_slave_addr;
+//		iec_slave->iec104_read_cmds[i].iec_asdu_addr = mb_slave->mb_slave_addr;
 		cur_cmd = json_object_array_get_idx(read_cmd_json, i );
 		if ( ! parse_iec104_read_cmd( cur_cmd, &iec_slave->iec104_read_cmds[i]) )
 		{
@@ -596,7 +596,7 @@ bool parse_slave_config_file(const char *filename,Modbus_Slave_TypeDef *mb_slave
 	}
 	for (int i = 0; i < iec_slave->iec104_write_cmd_num; i++)
 	{
-		iec_slave->iec104_write_cmds[i].iec_asdu_addr = mb_slave->mb_slave_addr;
+//		iec_slave->iec104_write_cmds[i].iec_asdu_addr = mb_slave->mb_slave_addr;
 		cur_cmd = json_object_array_get_idx(write_cmd_json, i );
 		if ( ! parse_iec104_write_cmd( cur_cmd, &iec_slave->iec104_write_cmds[i]) )
 		{
@@ -741,7 +741,9 @@ Transl_Config_TypeDef* read_config_file(const char *filename)
 			cur_slave = json_object_array_get_idx(mb_slaves, j );
 			// slave addr
 			json_object_object_get_ex(cur_slave, "mb_slave_address", &tmp_json );
-			config->serialport[i].mb_slave[j].mb_slave_addr = json_object_get_int(tmp_json );
+			int slave_addr = json_object_get_int(tmp_json );
+			config->serialport[i].mb_slave[j].mb_slave_addr = slave_addr;
+			config->iec104_slave[iec104_slave_cnt].iec_asdu_addr = slave_addr;
 			// slave config file
 			json_object_object_get_ex(cur_slave, "mb_slave_config_file", &tmp_json );
 			str = json_object_get_string(tmp_json );
