@@ -78,5 +78,6 @@ typedef struct  {
 CS104_Slave iec104_server_init( iec104_server *config, bool debug );
 int iec104_send_changed_data(CS104_Slave slave, iec104_server *config, cfg_iec_prior priority);
 void iec104_server_start(void);
+TypeID String_to_TypeID(const char *str);
 
 #endif /* IEC104_SERVER_H_ */

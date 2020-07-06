@@ -17,12 +17,7 @@
 #include "libmodbus/modbus.h"
 #include "iec104_server.h"
 
-/*
-// define for set state on/off
-#define SP_STATE_NO 0
-#define SP_STATE_ON 1
-#define SP_STATE_OFF 2
-*/
+
 
 typedef enum
 {
@@ -56,61 +51,7 @@ typedef enum
     cfg_iec_103,
 } cfg_ser_protocol;
 
-/*
-typedef enum
-{
-	cfg_btsw_dcba = 0,
-	cfg_btsw_abcd,
-	cfg_btsw_badc,
-	cfg_btsw_cdab
-} cfg_byte_swap;
 
-typedef enum
-{
-	cfg_onoff_state = 0,
-	cfg_onoff_value
-} cfg_on_off;
-*/
-
-typedef struct  {
-	char*		func_str;
-	TypeID		func_n;
-} cfg_iec_func;
-
-/*
-typedef enum  {
-	cfg_prior_low =0,
-	cfg_prior_hight,
-} cfg_iec_prior;
-
-typedef enum
-{
-	iec_priority = 0,
-	iec_byteswap,
-	iec_on_value,
-	iec_off_value
-} iec_set_params_flags;
-
-
-typedef struct  {
-	uint32_t				set_params;
-	uint32_t				on_value;
-	uint32_t				off_value;
-	cfg_iec_prior		priority;
-	cfg_byte_swap		byte_swap;
-} iec_add_params;
-
-
-
-
-typedef struct  {
-	TypeID				iec_func;
-	uint16_t				iec_ioa_addr;
-	uint8_t				iec_size;
-	iec_add_params		add_params;
-	data_mem			*value;
-} iec104_command;
-*/
 
 typedef struct  {
 	uint8_t				mb_func;
@@ -119,15 +60,7 @@ typedef struct  {
 	data_mem			*value;
 }modbus_command;
 
-/*
-typedef struct  {
-	uint16_t					iec_asdu_addr;
-	uint8_t					iec104_read_cmd_num;
-	iec104_command 		*iec104_read_cmds;
-	uint8_t					iec104_write_cmd_num;
-	iec104_command 		*iec104_write_cmds;
-} iec104_slave;
-*/
+
 
 typedef struct  {
 	uint8_t					mb_slave_addr;

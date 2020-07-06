@@ -11,28 +11,6 @@
 #include "slog.h"
 
 
-//#include <errno.h>
-
-
-const cfg_iec_func iec_read_fn_str[] = {
-{"M_SP_NA_1", M_SP_NA_1}, {"M_SP_TA_1", M_SP_TA_1}, {"M_DP_NA_1", M_DP_NA_1}, {"M_DP_TA_1", M_DP_TA_1}, {"M_ST_NA_1", M_ST_NA_1},
-{"M_ST_TA_1", M_ST_TA_1}, {"M_BO_NA_1", M_BO_NA_1}, {"M_BO_TA_1", M_BO_TA_1}, {"M_ME_NA_1", M_ME_NA_1}, {"M_ME_TA_1", M_ME_TA_1},
-{"M_ME_NB_1", M_ME_NB_1}, {"M_ME_TB_1", M_ME_TB_1}, {"M_ME_NC_1", M_ME_NC_1}, {"M_ME_TC_1", M_ME_TC_1}, {"M_IT_NA_1", M_IT_NA_1},
-{"M_IT_TA_1", M_IT_TA_1}, {"M_EP_TA_1", M_EP_TA_1}, {"M_EP_TB_1", M_EP_TB_1}, {"M_EP_TC_1", M_EP_TC_1}, {"M_PS_NA_1", M_PS_NA_1},
-{"M_ME_ND_1", M_ME_ND_1}, {"M_SP_TB_1", M_SP_TB_1}, {"M_DP_TB_1", M_DP_TB_1}, {"M_ST_TB_1", M_ST_TB_1}, {"M_BO_TB_1", M_BO_TB_1},
-{"M_ME_TD_1", M_ME_TD_1}, {"M_ME_TE_1", M_ME_TE_1}, {"M_ME_TF_1", M_ME_TF_1}, {"M_IT_TB_1", M_IT_TB_1}, {"M_EP_TD_1", M_EP_TD_1},
-{"M_EP_TE_1", M_EP_TE_1}, {"M_EP_TF_1", M_EP_TF_1},
-};
-
-const cfg_iec_func iec_write_fn_str[] = {
-{"C_SC_NA_1", C_SC_NA_1}, {"C_DC_NA_1", C_DC_NA_1}, {"C_RC_NA_1", C_RC_NA_1}, {"C_SE_NA_1", C_SE_NA_1}, {"C_SE_NB_1", C_SE_NB_1},
-{"C_SE_NC_1", C_SE_NC_1}, {"C_BO_NA_1", C_BO_NA_1}, {"C_SC_TA_1", C_SC_TA_1}, {"C_DC_TA_1", C_DC_TA_1}, {"C_RC_TA_1", C_RC_TA_1},
-{"C_SE_TA_1", C_SE_TA_1}, {"C_SE_TB_1", C_SE_TB_1}, {"C_SE_TC_1", C_SE_TC_1}, {"C_BO_TA_1", C_BO_TA_1}, {"C_IC_NA_1", C_IC_NA_1},
-{"C_CI_NA_1", C_CI_NA_1}, {"C_RD_NA_1", C_RD_NA_1}, {"C_CS_NA_1", C_CS_NA_1}, {"C_TS_NA_1", C_TS_NA_1}, {"C_RP_NA_1", C_RP_NA_1},
-{"C_CD_NA_1", C_CD_NA_1}, {"C_TS_TA_1", C_TS_TA_1},
-};
-
-
 
 // Just a utility function.
  void print_json_object(struct json_object *jobj, const char *msg)
@@ -40,7 +18,6 @@ const cfg_iec_func iec_write_fn_str[] = {
 	printf("\n%s: \n", msg );
 	printf("---\n%s\n---\n", json_object_to_json_string(jobj ) );
 }
-
 
 
  bool allocate_read_cmd_memory(modbus_command *cmd)
@@ -299,12 +276,7 @@ bool parse_iec104_read_cmd(struct json_object *cur_cmd, iec104_command *read_cmd
 	tmp_json = json_object_array_get_idx(iec_data_json, cfg_iec_function);
 	str = json_object_get_string(tmp_json);
 
-	size_t iec_fn_str_len = sizeof(iec_read_fn_str) / sizeof(iec_read_fn_str[0]);
-	read_cmd->iec_func = 0;
-	for (int fn=0; fn< iec_fn_str_len; fn++)
-	{
-		if ( !strcmp(str, iec_read_fn_str[fn].func_str) ) read_cmd->iec_func = iec_read_fn_str[fn].func_n;
-	}
+	read_cmd->iec_func = String_to_TypeID(str);
 	if (read_cmd->iec_func == 0)
 	{
 		slog_error( "Wrong iec104 read function: '%s' .", str);
@@ -375,12 +347,7 @@ int parse_iec104_write_cmd(struct json_object *cur_cmd, iec104_command *write_cm
 	tmp_json = json_object_array_get_idx(iec_data_json, cfg_iec_function);
 	str = json_object_get_string(tmp_json);
 
-	size_t iec_fn_str_len = sizeof(iec_write_fn_str) / sizeof(iec_write_fn_str[0]);
-	write_cmd->iec_func = 0;
-	for (int fn=0; fn< iec_fn_str_len; fn++)
-	{
-		if ( !strcmp(str, iec_write_fn_str[fn].func_str) ) write_cmd->iec_func = iec_write_fn_str[fn].func_n;
-	}
+	write_cmd->iec_func = String_to_TypeID(str);
 	if (write_cmd->iec_func == 0)
 	{
 		slog_error( "Wrong iec104 write function: '%s' .", str);
