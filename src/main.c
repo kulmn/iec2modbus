@@ -125,9 +125,6 @@ int main(int argc, char *argv[])
 		Thread_sleep(1000 );
 	}
 
-	slog_info( "Stop iec104 server");
-	CS104_Slave_stop(iec104_server.server );
-	CS104_Slave_destroy(iec104_server.server );
 
 	// stop serials protocols
 	for (uint8_t i = 0; i < config.num_ports; i++)
@@ -153,6 +150,10 @@ int main(int argc, char *argv[])
 			}break;
 		}
 	}
+
+
+	iec104_server_stop( &iec104_server);
+	slog_info( "Stop iec104 server");
 
 
 	slog_warn( "Stop programm. \n");

@@ -612,3 +612,30 @@ CS104_Slave iec104_server_init( iec104_server *config, bool debug )
 	return slave;
 }
 
+void iec104_server_stop( iec104_server *srv )
+{
+	CS104_Slave_stop(srv->server );
+	CS104_Slave_destroy(srv->server );
+
+	// free memory
+	for (int i = 0; i < srv->iec104_slave_num; i++)
+	{
+		for (int x = 0; x < srv->iec104_slave[i].iec104_read_cmd_num; x++)
+		{
+			free(srv->iec104_slave[i].iec104_read_cmds[x].value->mem_ptr);
+			free(srv->iec104_slave[i].iec104_read_cmds[x].value);
+		}
+		for (int x = 0; x < srv->iec104_slave[i].iec104_write_cmd_num; x++)
+		{
+			free(srv->iec104_slave[i].iec104_write_cmds[x].value->mem_ptr);
+			free(srv->iec104_slave[i].iec104_write_cmds[x].value);
+		}
+
+		free(srv->iec104_slave[i].iec104_read_cmds);
+		free(srv->iec104_slave[i].iec104_write_cmds);
+	}
+
+	free(srv->iec104_slave);
+}
+
+
