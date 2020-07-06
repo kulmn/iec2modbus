@@ -371,17 +371,22 @@ int parse_iec104_write_cmd(struct json_object *cur_cmd, iec104_command *write_cm
 bool parse_slave_iec104_config(struct json_object *parsed_json, iec104_slave *iec_slave )
 {
 	struct json_object *read_cmd_json=NULL, *write_cmd_json=NULL, *cur_cmd=NULL;
+	iec104_command *cmd_ptr = NULL;
 
 	json_object_object_get_ex(parsed_json, "read_commands", &read_cmd_json );
 	int read_cmd_num = json_object_array_length(read_cmd_json );
-	iec_slave->iec104_read_cmd_num =  read_cmd_num;
+//	iec_slave->iec104_read_cmd_num =  read_cmd_num;
 
-	iec_slave->iec104_read_cmds = (iec104_command*) malloc(iec_slave->iec104_read_cmd_num * sizeof(iec104_command) );
+	iec_slave->iec104_read_cmd_num =  0;
+//	iec_slave->iec104_read_cmds = (iec104_command*) malloc(iec_slave->iec104_read_cmd_num * sizeof(iec104_command) );
 
-	for (uint8_t i = 0; i < iec_slave->iec104_read_cmd_num; i++)
+//	for (uint8_t i = 0; i < iec_slave->iec104_read_cmd_num; i++)
+	for (uint8_t i = 0; i < read_cmd_num; i++)
 	{
+		cmd_ptr = iec104_add_slave_rd_cmd( iec_slave );
 		cur_cmd = json_object_array_get_idx(read_cmd_json, i );
-		if ( ! parse_iec104_read_cmd( cur_cmd, &iec_slave->iec104_read_cmds[i]) )
+//		if ( ! parse_iec104_read_cmd( cur_cmd, &iec_slave->iec104_read_cmds[i]) )
+		if ( ! parse_iec104_read_cmd( cur_cmd, cmd_ptr ))
 		{
 			slog_error( "Parsing read commands failed.");
 			return false;
@@ -607,10 +612,10 @@ bool read_config_file(const char *filename,Transl_Config_TypeDef *config ,iec104
 		config->serialport[i].num_slaves= json_object_array_length(mb_slaves );
 		config->serialport[i].mb_slave = (Modbus_Slave_TypeDef*) malloc(config->serialport[i].num_slaves * sizeof(Modbus_Slave_TypeDef) );
 
-		iec104_server->iec104_slave_num += config->serialport[i].num_slaves;
+//		iec104_server->iec104_slave_num += config->serialport[i].num_slaves;
 	}
 
-	iec104_server->iec104_slave = (iec104_slave*) malloc(iec104_server->iec104_slave_num * sizeof(iec104_slave) );
+//	iec104_server->iec104_slave = (iec104_slave*) malloc(iec104_server->iec104_slave_num * sizeof(iec104_slave) );
 
 	uint8_t iec104_slave_cnt = 0;
 	for (int i = 0; i < config->num_ports; i++)
@@ -627,7 +632,9 @@ bool read_config_file(const char *filename,Transl_Config_TypeDef *config ,iec104
 			json_object_object_get_ex(cur_slave, "slave_address", &tmp_json );
 			int slave_addr = json_object_get_int(tmp_json );
 			config->serialport[i].mb_slave[j].mb_slave_addr = slave_addr;
-			iec104_server->iec104_slave[iec104_slave_cnt].iec_asdu_addr = slave_addr;
+//			iec104_server->iec104_slave[iec104_slave_cnt].iec_asdu_addr = slave_addr;
+
+			iec104_add_slave( iec104_server,  slave_addr );
 			// slave config file
 			json_object_object_get_ex(cur_slave, "slave_config_file", &tmp_json );
 			str = json_object_get_string(tmp_json );

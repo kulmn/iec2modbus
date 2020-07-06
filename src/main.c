@@ -41,6 +41,7 @@ int main(int argc, char *argv[])
 
 	// read main config
 
+	iec104_server.iec104_slave_num = 0;
 	if (! read_config_file("config.json",&config ,&iec104_server ))
 	{
 		slog_error( "Config file load failed.");

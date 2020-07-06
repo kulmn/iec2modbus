@@ -578,6 +578,40 @@ static void connectionEventHandler(void* parameter, IMasterConnection con, CS104
 }
 
 
+void iec104_add_slave( iec104_server *srv, uint16_t asdu_addr )
+{
+	iec104_slave *new_ptr = NULL;
+	uint16_t slave_num = srv->iec104_slave_num++;
+
+	new_ptr = (iec104_slave*) malloc(srv->iec104_slave_num * sizeof(iec104_slave) );
+	for(int i=0; i< slave_num; i++)		new_ptr[i] = srv->iec104_slave[i];
+
+	free(srv->iec104_slave);
+	srv->iec104_slave = new_ptr;
+	srv->iec104_slave[srv->iec104_slave_num-1].iec_asdu_addr = asdu_addr;
+}
+
+iec104_command* iec104_add_slave_rd_cmd( iec104_slave *slave )
+{
+	iec104_command *new_ptr = NULL;
+	uint16_t cmd_num = slave->iec104_read_cmd_num++;
+
+	new_ptr = (iec104_command*) malloc(slave->iec104_read_cmd_num * sizeof(iec104_command) );
+	for(int i=0; i< cmd_num; i++)		new_ptr[i] = slave->iec104_read_cmds[i];
+
+	free(slave->iec104_read_cmds);
+	slave->iec104_read_cmds = new_ptr;
+
+	return &slave->iec104_read_cmds[slave->iec104_read_cmd_num-1];
+}
+
+void iec104_add_slave_wr_cmd( iec104_server *srv, uint16_t asdu_addr )
+{
+
+
+
+}
+
 
 
 CS104_Slave iec104_server_init( iec104_server *config, bool debug )
