@@ -87,6 +87,9 @@
 							<tool id="cdt.managedbuild.tool.gnu.cross.c.compiler.1536718188" name="Cross GCC Compiler" superClass="cdt.managedbuild.tool.gnu.cross.c.compiler">
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="gnu.c.compiler.option.include.paths.623072576" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
 									<listOptionValue builtIn="false" value="../include"/>
+									<listOptionValue builtIn="false" value="../src/lib60870-C/common/inc"/>
+									<listOptionValue builtIn="false" value="../src/lib60870-C/hal/inc"/>
+									<listOptionValue builtIn="false" value="../src/lib60870-C/inc/api"/>
 									<listOptionValue builtIn="false" value="../src/lib60870-C/inc/internal"/>
 								</option>
 								<option defaultValue="gnu.c.optimization.level.most" id="gnu.c.compiler.option.optimization.level.252251561" name="Optimization Level" superClass="gnu.c.compiler.option.optimization.level" useByScannerDiscovery="false" value="gnu.c.optimization.level.optimize" valueType="enumerated"/>
@@ -145,6 +148,9 @@
 							<tool id="cdt.managedbuild.tool.gnu.cross.c.compiler.2131433225" name="Cross GCC Compiler" superClass="cdt.managedbuild.tool.gnu.cross.c.compiler">
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="gnu.c.compiler.option.include.paths.1055954083" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
 									<listOptionValue builtIn="false" value="../include"/>
+									<listOptionValue builtIn="false" value="../src/lib60870-C/common/inc"/>
+									<listOptionValue builtIn="false" value="../src/lib60870-C/hal/inc"/>
+									<listOptionValue builtIn="false" value="../src/lib60870-C/inc/api"/>
 									<listOptionValue builtIn="false" value="../src/lib60870-C/inc/internal"/>
 								</option>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="gnu.c.compiler.option.preprocessor.def.symbols.1575945760" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" useByScannerDiscovery="false" valueType="definedSymbols">
@@ -203,6 +209,9 @@
 							<tool id="cdt.managedbuild.tool.gnu.cross.c.compiler.701036873" name="Cross GCC Compiler" superClass="cdt.managedbuild.tool.gnu.cross.c.compiler">
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="gnu.c.compiler.option.include.paths.581568743" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
 									<listOptionValue builtIn="false" value="../include"/>
+									<listOptionValue builtIn="false" value="../src/lib60870-C/common/inc"/>
+									<listOptionValue builtIn="false" value="../src/lib60870-C/hal/inc"/>
+									<listOptionValue builtIn="false" value="../src/lib60870-C/inc/api"/>
 									<listOptionValue builtIn="false" value="../src/lib60870-C/inc/internal"/>
 								</option>
 								<option defaultValue="gnu.c.optimization.level.most" id="gnu.c.compiler.option.optimization.level.1704917921" name="Optimization Level" superClass="gnu.c.compiler.option.optimization.level" useByScannerDiscovery="false" value="gnu.c.optimization.level.optimize" valueType="enumerated"/>
@@ -266,6 +275,9 @@
 							<tool id="cdt.managedbuild.tool.gnu.cross.c.compiler.1502558392" name="Cross GCC Compiler" superClass="cdt.managedbuild.tool.gnu.cross.c.compiler">
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="gnu.c.compiler.option.include.paths.496846183" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
 									<listOptionValue builtIn="false" value="../include"/>
+									<listOptionValue builtIn="false" value="../src/lib60870-C/inc/api"/>
+									<listOptionValue builtIn="false" value="../src/lib60870-C/hal/inc"/>
+									<listOptionValue builtIn="false" value="../src/lib60870-C/common/inc"/>
 									<listOptionValue builtIn="false" value="../src/lib60870-C/inc/internal"/>
 								</option>
 								<option defaultValue="gnu.c.optimization.level.most" id="gnu.c.compiler.option.optimization.level.161989172" name="Optimization Level" superClass="gnu.c.compiler.option.optimization.level" useByScannerDiscovery="false" value="gnu.c.optimization.level.optimize" valueType="enumerated"/>

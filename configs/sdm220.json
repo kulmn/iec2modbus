@@ -2,25 +2,25 @@
 	"read_commands": 
 	[
 		{
-			"iec_priority": "hight",								// hight, low
 			"modbus_data": ["04_read_input", "0x0000", 2], 		// 01_read_coils, 02_read_discrete, 03_read_holding, 04_read_input
-			"iec104_data": ["M_ME_NC_1", "0x0010", 0]			// M_SP_NA_1, M_BO_NA_1, M_ME_NC_1, M_ME_NA_1, M_IT_NA_1, M_ME_NB_1
+			"iec104_data": ["M_ME_NC_1", "0x0010", 0],			// M_SP_NA_1, M_BO_NA_1, M_ME_NC_1, M_ME_NA_1, M_IT_NA_1, M_ME_NB_1
+			"add_param":["priority=hight","byteswap=dcba"]
 
 		},
 		{
 			"modbus_data": ["04_read_input", "0x0046", 2],		
-			"iec104_data": ["M_ME_NC_1", "0x0020", 0],
-			"byteswap": "dcba"									// abcd, dcba, badc, cdab
+			"iec104_data": ["M_ME_NC_1", "0x0020", 0]
+								// abcd, dcba, badc, cdab
 		},
 		{
 			"modbus_data": ["04_read_input", "0x0048", 2],
-			"iec104_data": ["M_ME_NC_1", "0x0030",0],
-			"byteswap": "dcba"
+			"iec104_data": ["M_ME_NC_1", "0x0030",0]
+
 		},
 		{
 			"modbus_data": ["03_read_holding", "0x0056", 2],
-			"iec104_data": ["M_ME_NC_1", "0x0040", 0],
-			"byteswap": "dcba"
+			"iec104_data": ["M_ME_NC_1", "0x0040", 0]
+
 		}
 	],
 	"write_commands": 
@@ -28,12 +28,8 @@
 		{
 			"modbus_data": ["06_write_singl_holding", "0x0056"],		//05_write_singl_coil, 06_write_singl_holding, 16_write_multiple_holding
 			"iec104_data": ["C_SC_NA_1", "0x0040"],					//C_SC_NA_1, C_DC_NA_1, C_SE_NA_1, C_SE_NB_1, C_SE_NC_1, C_BO_NA_1
-			"set_state":["ON","0x0001"]								// [ON/OFF,16bit reg value] 
-		},
-		{
-			"modbus_data": ["06_write_singl_holding", "0x0056"],		
-			"iec104_data": ["C_SC_NA_1", "0x0040"],					
-			"set_state":["OFF","0x0000"]
+			"add_param":["ON=1","OFF=2","priority=hight","byteswap=dcba"]
+ 
 		}
 	]
 }

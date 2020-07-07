@@ -8,11 +8,11 @@
 			"slave": [
 				{
 					"slave_address": 1,
-					"slave_config_file": "configs/sdm220_1.json"
+					"slave_config_file": "configs/sdm220.json"
 				},
 				{
 					"slave_address": 2,
-					"slave_config_file": "configs/sdm220_1.json"
+					"slave_config_file": "configs/sdm220.json"
 				}
 			]
 		},
@@ -23,11 +23,11 @@
 			"slave": [
 				{
 					"slave_address": 3,
-					"slave_config_file": "configs/sdm220_1.json"
+					"slave_config_file": "configs/sdm220.json"
 				},
 				{
 					"slave_address": 4,
-					"slave_config_file": "configs/sdm220_1.json"
+					"slave_config_file": "configs/sdm220.json"
 				}
 			]
 		}
