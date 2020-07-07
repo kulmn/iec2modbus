@@ -90,15 +90,60 @@ static int iec104_set_system_time(CP56Time2a newTime)
 int iec_104_single_point_asdu(iec104_command *cmd, CS101_ASDU asdu)
 {
 	InformationObject io = NULL;
-	uint16_t ioa = cmd->iec_ioa_addr;
-	uint16_t data  =  *(uint16_t*) cmd->value->mem_ptr;
+	uint32_t data, bitmask;
+//	uint16_t data  =  *(uint16_t*) cmd->value->mem_ptr;
 	bool sp_data;
 
 	QualityDescriptor quality=IEC60870_QUALITY_GOOD;
 	if (cmd->value->mem_state == mem_err) quality = IEC60870_QUALITY_INVALID;
 
-	int size = cmd->iec_size;
 
+	if (cmd->value->mem_size > sizeof(uint32_t))
+	{
+		return 1;		//FIXME error, max 32 bits
+	}
+
+	if (cmd->value->mem_size == sizeof(uint32_t))
+	{
+		uint16_t *data_ptr = (uint16_t*) cmd->value->mem_ptr;
+		switch(cmd->add_params.byte_swap)
+		{
+			case cfg_btsw_abcd: data  = ntohl(((uint32_t)data_ptr[0] << 16) + data_ptr[1]); break;
+			case cfg_btsw_badc: data  = ntohl((uint32_t)(bswap_16(data_ptr[0]) << 16) + bswap_16(data_ptr[1])); break;
+			case cfg_btsw_cdab: data  = ntohl((((uint32_t)data_ptr[1]) << 16) + data_ptr[0]); break;
+			default: data  = ntohl(bswap_32((((uint32_t)data_ptr[0]) << 16) + data_ptr[1]));
+		}
+	}else
+	{
+		memcpy(&data, cmd->value->mem_ptr, cmd->value->mem_size);
+	}
+
+	uint8_t num_bits;
+	if (cmd->add_params.set_params & (1 << iec_bitmask) )
+	{
+		bitmask = cmd->add_params.bitmask;
+		num_bits = (cmd->value->mem_size << 3);
+	}else
+	{
+		bitmask = UINT32_MAX;
+		num_bits = cmd->iec_size;
+	}
+
+	int ioa = cmd->iec_ioa_addr;
+	for (int i = 0; i < num_bits; i++)
+	{
+		if (bitmask & (1<<i) )
+		{
+			if ( data & (1<<i)  ) sp_data = true;
+			else  sp_data = false;
+			io = (InformationObject) SinglePointInformation_create(NULL, ioa++, sp_data, quality );
+			InformationObject_setType(io, cmd->iec_func );
+			CS101_ASDU_addInformationObject(asdu, io );
+			InformationObject_destroy(io );
+		}
+	}
+
+/*
 	if (size>0 && size<17)
 	{
 		for (int i = 0; i < size; i++)
@@ -114,7 +159,7 @@ int iec_104_single_point_asdu(iec104_command *cmd, CS101_ASDU asdu)
 	{
 		//FIXME Error
 	}
-
+*/
 	return 0;
 }
 
@@ -586,7 +631,7 @@ void iec104_add_slave( iec104_server *srv, uint16_t asdu_addr )
 	new_ptr = (iec104_slave*) malloc(srv->iec104_slave_num * sizeof(iec104_slave) );
 	for(int i=0; i< slave_num; i++)		new_ptr[i] = srv->iec104_slave[i];
 
-	free(srv->iec104_slave);
+	if (srv->iec104_slave != NULL) 		free(srv->iec104_slave);
 	srv->iec104_slave = new_ptr;
 	srv->iec104_slave[srv->iec104_slave_num-1].iec_asdu_addr = asdu_addr;
 }
@@ -599,7 +644,7 @@ iec104_command* iec104_add_slave_rd_cmd( iec104_slave *slave )
 	new_ptr = (iec104_command*) malloc(slave->iec104_read_cmd_num * sizeof(iec104_command) );
 	for(int i=0; i< cmd_num; i++)		new_ptr[i] = slave->iec104_read_cmds[i];
 
-	free(slave->iec104_read_cmds);
+	if (slave->iec104_read_cmds != NULL)	free(slave->iec104_read_cmds);
 	slave->iec104_read_cmds = new_ptr;
 
 	return &slave->iec104_read_cmds[slave->iec104_read_cmd_num-1];

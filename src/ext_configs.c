@@ -215,6 +215,11 @@ int parse_iec_add_params(struct json_object *add_parm_json, iec104_command *cmd 
 				else {} //use default
 				cmd->add_params.set_params |= (1 << iec_byteswap);
 			}
+			else if ( !strcmp(param, "bitmask") )
+			{
+				cmd->add_params.bitmask = strtol(value, NULL, 0);
+				cmd->add_params.set_params |= (1 << iec_bitmask);
+			}
 			else if ( !strcmp(param, "ON") )
 			{
 				cmd->add_params.on_value  = strtol(value, NULL, 0);
@@ -378,6 +383,7 @@ bool parse_slave_iec104_config(struct json_object *parsed_json, iec104_slave *ie
 //	iec_slave->iec104_read_cmd_num =  read_cmd_num;
 
 	iec_slave->iec104_read_cmd_num =  0;
+	iec_slave->iec104_read_cmds = NULL;
 //	iec_slave->iec104_read_cmds = (iec104_command*) malloc(iec_slave->iec104_read_cmd_num * sizeof(iec104_command) );
 
 //	for (uint8_t i = 0; i < iec_slave->iec104_read_cmd_num; i++)
@@ -548,7 +554,7 @@ bool read_config_file(const char *filename,Transl_Config_TypeDef *config ,iec104
 	config->num_ports = json_object_array_length(ports );
 	config->serialport = (Serial_Port_TypeDef*) malloc(config->num_ports * sizeof(Serial_Port_TypeDef) );
 
-	iec104_server->iec104_slave_num = 0;
+
 	for (int i = 0; i < config->num_ports; i++)
 	{
 		cur_port = json_object_array_get_idx(ports, i );
@@ -617,6 +623,8 @@ bool read_config_file(const char *filename,Transl_Config_TypeDef *config ,iec104
 
 //	iec104_server->iec104_slave = (iec104_slave*) malloc(iec104_server->iec104_slave_num * sizeof(iec104_slave) );
 
+	iec104_server->iec104_slave_num = 0;
+	iec104_server->iec104_slave = NULL;
 	uint8_t iec104_slave_cnt = 0;
 	for (int i = 0; i < config->num_ports; i++)
 	{

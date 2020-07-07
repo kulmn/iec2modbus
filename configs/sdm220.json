@@ -21,7 +21,14 @@
 			"modbus_data": ["03_read_holding", "0x0056", 2],
 			"iec104_data": ["M_ME_NC_1", "0x0040", 0]
 
+		},
+		{
+			"modbus_data": ["03_read_holding", "0x0058", 2],
+			"iec104_data": ["M_SP_NA_1", "0x0040", 0],
+			"add_param":["byteswap=dcba", "bitmask=0x00200002"]
 		}
+
+
 	],
 	"write_commands": 
 	[

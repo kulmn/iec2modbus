@@ -36,6 +36,7 @@ typedef enum
 {
 	iec_priority = 0,
 	iec_byteswap,
+	iec_bitmask,
 	iec_on_value,
 	iec_off_value
 } iec_set_params_flags;
@@ -46,6 +47,7 @@ typedef struct  {
 	uint32_t				off_value;
 	cfg_iec_prior		priority;
 	cfg_byte_swap		byte_swap;
+	uint32_t				bitmask;
 } iec_add_params;
 
 typedef struct  {
