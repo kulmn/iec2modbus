@@ -23,9 +23,9 @@
 
 		},
 		{
-			"modbus_data": ["03_read_holding", "0x0058", 2],
-			"iec104_data": ["M_SP_NA_1", "0x0040", 0],
-			"add_param":["byteswap=dcba", "bitmask=0x00200002"]
+			"modbus_data": ["02_read_discrete", "0x0058", 6],
+			"iec104_data": ["M_SP_NA_1", "0x0040", 6]
+			//"add_param":["byteswap=dcba", "bitmask=0x00200002"]
 		}
 
 
