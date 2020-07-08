@@ -1,5 +1,5 @@
 {	"log_level": "debug",				// debug, info, warning, error
-	"iec104_send_rate_s": 30,
+	"iec104_send_rate_s": 10,
 	"serial_ports": [
 		{
 			"device": ["/dev/ttyUSB0",9600,8,"N",1],

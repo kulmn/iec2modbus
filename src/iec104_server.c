@@ -95,8 +95,6 @@ int iec_104_single_point_asdu(iec104_command *cmd, CS101_ASDU asdu)
 	bool sp_data;
 
 
-	cmd->value->mem_ptr[0]= 0xFF;
-
 	QualityDescriptor quality=IEC60870_QUALITY_GOOD;
 	if (cmd->value->mem_state == mem_err) quality = IEC60870_QUALITY_INVALID;
 

@@ -342,6 +342,7 @@ bool parse_iec104_read_cmd(struct json_object *cur_cmd, iec104_command *read_cmd
 	struct json_object *add_parm_json=NULL;
 	read_cmd->add_params.priority = cfg_prior_low;
 	read_cmd->add_params.byte_swap = cfg_btsw_dcba;
+	read_cmd->add_params.set_params = 0;
 	if (json_object_object_get_ex(cur_cmd, "add_param", &add_parm_json ))
 	{
 		parse_iec_add_params( add_parm_json , read_cmd );
@@ -409,6 +410,7 @@ int parse_iec104_write_cmd(struct json_object *cur_cmd, iec104_command *write_cm
 	write_cmd->iec_ioa_addr = strtol(str, NULL, 0);
 
 	// Additional parameters
+	write_cmd->add_params.set_params = 0;
 	struct json_object *add_parm_json=NULL;
 	if (json_object_object_get_ex(cur_cmd, "add_param", &add_parm_json ))
 	{
