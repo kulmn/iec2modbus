@@ -316,22 +316,67 @@ int iec104_send_changed_data(CS104_Slave slave, iec104_server *config, cfg_iec_p
 bool iec104_receive_single_cmd(iec104_command* cmd,  InformationObject io)
 {
 	SingleCommand sc = (SingleCommand) io;
-	uint16_t *data_ptr = (uint16_t *) cmd->value->mem_ptr;
+	uint32_t data;
 
-	if (SingleCommand_getState(sc ) )
+	if (cmd->add_params.set_params & ( (1 << iec_on_value) | (1 << iec_off_value) ))
 	{
-		if (cmd->add_params.set_params & (1 << iec_on_value) )
-			data_ptr[0] = cmd->add_params.on_value;
-		else
-			data_ptr[0] = 1;
+		if (SingleCommand_getState(sc ) )
+		{
+			if (cmd->add_params.set_params & (1 << iec_on_value) )
+			{
+				data = cmd->add_params.on_value;
+				cmd->value->mem_state = mem_new;
+			}else return false;
+		}else
+		{
+			if (cmd->add_params.set_params & (1 << iec_off_value) )
+			{
+				data = cmd->add_params.off_value;
+				cmd->value->mem_state = mem_new;
+			}else return false;
+		}
 	}else
 	{
-		if (cmd->add_params.set_params & (1 << iec_off_value) )
-			data_ptr[0] = cmd->add_params.off_value;
-		else
-			data_ptr[0] = 0;
+		if (SingleCommand_getState(sc ) )		data = 1;
+		else data = 0;
+		cmd->value->mem_state = mem_new;
 	}
-	cmd->value->mem_state = mem_new;
+
+	uint16_t *data_ptr = (uint16_t*) cmd->value->mem_ptr;
+	if (cmd->value->mem_size == sizeof(uint32_t))
+	{
+		switch (cmd->add_params.byte_swap)
+		{
+			case cfg_btsw_abcd: {
+				data = ntohl(data );
+				data_ptr[0] = (uint16_t) (data >> 16);
+				data_ptr[1] = (uint16_t) (data);
+			}
+				break;
+			case cfg_btsw_badc: {
+				data = ntohl(data );
+				data_ptr[0] = bswap_16((uint16_t ) (data) );
+				data_ptr[1] = bswap_16((uint16_t ) (data >> 16) );
+			}
+				break;
+			case cfg_btsw_cdab: {
+				data = ntohl(data );
+				data_ptr[0] = (uint16_t) (data);
+				data_ptr[1] = (uint16_t) (data >> 16);
+			}
+				break;
+			default: {
+				data = ntohl(bswap_32(data ) );
+				data_ptr[0] = (uint16_t) (data >> 16);
+				data_ptr[1] = (uint16_t) (data);
+			}
+		}
+	} else
+	{
+		data_ptr[0] = data;
+	}
+
+
 	return true;
 }
 
@@ -449,10 +494,13 @@ bool iec104_receive_cmd(iec104_command *cmd, InformationObject io, CS101_ASDU as
 
 
 /*************************************************************************************/
-static iec104_command* find_iec_cmd(iec104_server *config, InformationObject io, TypeID type_id, int common_addr)
+static iec104_command* find_iec_cmd(iec104_server *config, InformationObject io, TypeID type_id, int common_addr, uint8_t N_cmd)
 {
 	int ioa_addr = InformationObject_getObjectAddress(io );
-	iec104_command *find_cmd_ptr=NULL;
+	iec104_command *find_cmd_ptr[MAX_CMD_CNT];
+	uint8_t cmd_cnt = 0;
+
+	for (int i = 0; i < MAX_CMD_CNT; i++)		find_cmd_ptr[i] = NULL;
 
 	for (int j = 0; j < config->iec104_slave_num; j++)
 	{
@@ -461,12 +509,14 @@ static iec104_command* find_iec_cmd(iec104_server *config, InformationObject io,
 		{
 			if ((common_addr == asdu_addr) && (ioa_addr == config->iec104_slave[j].iec104_write_cmds[x].iec_ioa_addr) && (type_id == config->iec104_slave[j].iec104_write_cmds[x].iec_func))
 			{
-				find_cmd_ptr = &config->iec104_slave[j].iec104_write_cmds[x];
+				find_cmd_ptr[cmd_cnt++] = &config->iec104_slave[j].iec104_write_cmds[x];
+				if (cmd_cnt >= MAX_CMD_CNT) return NULL;
 			}
 		}
 	}
+	if (N_cmd >= MAX_CMD_CNT) N_cmd = 0;
 
-	return find_cmd_ptr;
+	return find_cmd_ptr[N_cmd];
 }
 
 
@@ -570,14 +620,18 @@ static bool asduHandler(void *parameter, IMasterConnection connection, CS101_ASD
 					slog_warn("Wrong ASDU received");
 					return false;
 				}
-				write_cmd = find_iec_cmd(config, io, type_id, common_addr );
-				if (write_cmd != NULL)
+				for (uint8_t cmd_num=0; cmd_num < MAX_CMD_CNT; cmd_num++)
 				{
-					slog_debug("command found: ioa = %d, ca = %d, type_id = %d ", write_cmd->iec_ioa_addr, common_addr, write_cmd->iec_func );
-					if (iec104_receive_cmd(write_cmd, io, asdu ))
+					write_cmd = find_iec_cmd(config, io, type_id, common_addr , cmd_num);
+					if (write_cmd != NULL)
 					{
-						IMasterConnection_sendASDU(connection, asdu );
-						rc = true;
+						slog_debug("command found: ioa = %d, ca = %d, type_id = %d ", write_cmd->iec_ioa_addr, common_addr, write_cmd->iec_func );
+						if (iec104_receive_cmd(write_cmd, io, asdu ))
+						{
+							IMasterConnection_sendASDU(connection, asdu );
+							rc = true;
+							cmd_num = MAX_CMD_CNT;
+						}
 					}
 				}
 				InformationObject_destroy(io );

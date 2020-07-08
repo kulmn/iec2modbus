@@ -33,7 +33,7 @@
 	"write_commands": 
 	[
 		{
-			"modbus_data": ["06_write_singl_holding", "0x0056"],		//05_write_singl_coil, 06_write_singl_holding, 16_write_multiple_holding
+			"modbus_data": ["06_write_singl_holding", "0x0056", 2],		//05_write_singl_coil, 06_write_singl_holding, 16_write_multiple_holding
 			"iec104_data": ["C_SC_NA_1", "0x0040"],					//C_SC_NA_1, C_DC_NA_1, C_SE_NA_1, C_SE_NB_1, C_SE_NC_1, C_BO_NA_1
 			"add_param":["ON=1","OFF=2","priority=hight","byteswap=dcba"]
  

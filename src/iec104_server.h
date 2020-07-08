@@ -16,7 +16,7 @@
 #include "moxa_dev.h"
 #include "memory.h"
 
-//#define MAX_CMD_CNT		4
+#define MAX_CMD_CNT		4
 
 
 typedef enum

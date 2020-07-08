@@ -18,7 +18,45 @@
 	printf("\n%s: \n", msg );
 	printf("---\n%s\n---\n", json_object_to_json_string(jobj ) );
 }
+ bool allocate_all_cmd_memory(modbus_command *cmd)
+ {
+ 	uint8_t size_in_bytes = 0;
 
+ 	switch (cmd->mb_func)
+ 	{
+ 		case MODBUS_FC_READ_COILS:
+ 		case MODBUS_FC_WRITE_SINGLE_COIL:
+ 		case MODBUS_FC_WRITE_MULTIPLE_COILS:
+ 		case MODBUS_FC_READ_DISCRETE_INPUTS:
+ 		{
+ 			size_in_bytes = (cmd->mb_data_size >> 3) + 1;
+ 		}break;
+ 		case MODBUS_FC_READ_HOLDING_REGISTERS:
+ 		case MODBUS_FC_READ_INPUT_REGISTERS:
+ 		case MODBUS_FC_WRITE_SINGLE_REGISTER:
+ 		case MODBUS_FC_WRITE_MULTIPLE_REGISTERS:
+ 		{
+ 			size_in_bytes = (cmd->mb_data_size * sizeof(uint16_t));
+ 		}break;
+ 	}
+ 	if (size_in_bytes == 0)
+ 	{
+ 		slog_error("Data size for read_command = 0, mb_fn=%d ",  cmd->mb_func );
+ 		return false;
+ 	}
+ 	cmd->value->mem_ptr = (uint8_t*) malloc(size_in_bytes );
+
+ 	if (cmd->value->mem_ptr == NULL)
+ 	{
+ 		slog_error("Unable to allocate %d bytes for read_command, mb_fn=%d ", size_in_bytes, cmd->mb_func );
+ 		return false;
+ 	}
+ 	memset(cmd->value->mem_ptr, 0, size_in_bytes );
+
+ 	cmd->value->mem_size = size_in_bytes;
+ 	cmd->value->mem_state = mem_init;
+ 	return true;
+ }
 
  bool allocate_read_cmd_memory(modbus_command *cmd)
 {
@@ -54,7 +92,7 @@
 	return true;
 }
 
- bool allocate_write_cmd_memory(iec104_command *cmd)
+bool allocate_write_cmd_memory(iec104_command *cmd)
  {
 		uint8_t size_in_bytes = 0;
 		switch (cmd->iec_func)
@@ -114,7 +152,9 @@ bool allocate_cmd_memory(Transl_Config_TypeDef *config, iec104_server *iec104_se
 				config->serialport[i].mb_slave[j].mb_read_cmds[x].value = ptr;
 				//config->serialport[i].mb_slave[j].iec104_read_cmds[x].value = ptr;
 				iec104_server->iec104_slave[iec104_slave_cnt].iec104_read_cmds[x].value =ptr;
-				allocate_read_cmd_memory(&config->serialport[i].mb_slave[j].mb_read_cmds[x] );
+				//allocate_read_cmd_memory(&config->serialport[i].mb_slave[j].mb_read_cmds[x] );
+
+				allocate_all_cmd_memory(&config->serialport[i].mb_slave[j].mb_read_cmds[x] );
 			}
 
 			for (int x = 0; x < config->serialport[i].mb_slave[j].mb_write_cmd_num; x++) // Modbus slave write commands num
@@ -123,7 +163,9 @@ bool allocate_cmd_memory(Transl_Config_TypeDef *config, iec104_server *iec104_se
 				config->serialport[i].mb_slave[j].mb_write_cmds[x].value = ptr;
 				//config->serialport[i].mb_slave[j].iec104_write_cmds[x].value = ptr;
 				iec104_server->iec104_slave[iec104_slave_cnt].iec104_write_cmds[x].value =ptr;
-				allocate_write_cmd_memory(&iec104_server->iec104_slave[iec104_slave_cnt].iec104_write_cmds[x] );
+				//allocate_write_cmd_memory(&iec104_server->iec104_slave[iec104_slave_cnt].iec104_write_cmds[x] );
+
+				allocate_all_cmd_memory(&config->serialport[i].mb_slave[j].mb_write_cmds[x] );		// FIXME
 			}
 
 			iec104_slave_cnt++;
@@ -338,6 +380,9 @@ int parse_modbus_write_cmd(struct json_object *cur_cmd, modbus_command *write_cm
 	// parse iec104 function code
 	tmp_json = json_object_array_get_idx(iec_data_json, cfg_iec_function);
 	str = json_object_get_string(tmp_json);
+	// parse modbus data size
+	tmp_json = json_object_array_get_idx(mb_data_json, cfg_mb_size);
+	write_cmd->mb_data_size = json_object_get_int(tmp_json);
 
 	return true;
 }
