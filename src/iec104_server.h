@@ -83,6 +83,7 @@ int iec104_send_changed_data(CS104_Slave slave, iec104_server *config, cfg_iec_p
 void iec104_server_stop( iec104_server *srv );
 void iec104_add_slave( iec104_server *srv, uint16_t asdu_addr );
 iec104_command* iec104_add_slave_rd_cmd( iec104_slave *slave );
+iec104_command*  iec104_add_slave_wr_cmd( iec104_slave *slave );
 TypeID String_to_TypeID(const char *str);
 
 #endif /* IEC104_SERVER_H_ */

@@ -358,12 +358,17 @@ bool parse_slave_iec104_config(struct json_object *parsed_json, iec104_slave *ie
 
 	json_object_object_get_ex(parsed_json, "write_commands", &write_cmd_json );
 	int write_cmd_num = json_object_array_length(write_cmd_json );
-	iec_slave->iec104_write_cmd_num = write_cmd_num;
-	iec_slave->iec104_write_cmds = (iec104_command*) malloc(iec_slave->iec104_write_cmd_num * sizeof(iec104_command) );
-	for (int i = 0; i < iec_slave->iec104_write_cmd_num; i++)
+
+	//iec_slave->iec104_write_cmd_num = write_cmd_num;
+	//iec_slave->iec104_write_cmds = (iec104_command*) malloc(iec_slave->iec104_write_cmd_num * sizeof(iec104_command) );
+
+	iec_slave->iec104_write_cmd_num = 0;
+	iec_slave->iec104_write_cmds = NULL;
+	for (int i = 0; i < write_cmd_num; i++)
 	{
+		cmd_ptr = iec104_add_slave_wr_cmd( iec_slave );
 		cur_cmd = json_object_array_get_idx(write_cmd_json, i );
-		if ( ! parse_iec104_write_cmd( cur_cmd, &iec_slave->iec104_write_cmds[i]) )
+		if ( ! parse_iec104_write_cmd( cur_cmd, cmd_ptr ))
 		{
 			slog_error( "Parsing write commands failed.");
 			return false;
