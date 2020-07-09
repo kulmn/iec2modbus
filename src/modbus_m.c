@@ -121,6 +121,7 @@ int modbus_read(modbus_t* mb_ptr, Modbus_Slave_TypeDef *slave)
 				// Error function not supported		//FIXME
 			}
 		}
+		pthread_mutex_lock(&slave->mb_read_cmds[i].value->lock);
 		data_state	state;
 		if (rc == -1) state = mem_err;
 		else if (memcmp(data_ptr, slave->mb_read_cmds[i].value->mem_ptr, slave->mb_read_cmds[i].value->mem_size) != 0)
@@ -135,6 +136,7 @@ int modbus_read(modbus_t* mb_ptr, Modbus_Slave_TypeDef *slave)
 		}
 		slave->mb_read_cmds[i].value->mem_state = state;
 		free(data_ptr);
+		pthread_mutex_unlock(&slave->mb_read_cmds[i].value->lock);
 
 	}
 

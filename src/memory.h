@@ -9,6 +9,7 @@
 #define MEMORY_H_
 
 #include <stdio.h>
+#include <pthread.h>
 //#include "ext_configs.h"
 
 typedef enum  {
@@ -30,6 +31,7 @@ typedef struct  {
 	data_type			mem_type;
 	data_state			mem_state;
 	uint8_t				*mem_ptr;
+	pthread_mutex_t	lock;
 }data_mem;
 
 

@@ -685,7 +685,7 @@ void iec104_add_slave( iec104_server *srv, uint16_t asdu_addr )
 	iec104_slave *new_ptr = NULL;
 	uint16_t slave_num = srv->iec104_slave_num++;
 
-	new_ptr = (iec104_slave*) malloc(srv->iec104_slave_num * sizeof(iec104_slave) );
+	new_ptr = (iec104_slave*) malloc(srv->iec104_slave_num * sizeof(iec104_slave) );			//FIXME add malloc error
 	for(int i=0; i< slave_num; i++)		new_ptr[i] = srv->iec104_slave[i];
 
 	if (srv->iec104_slave != NULL) 		free(srv->iec104_slave);
@@ -698,7 +698,7 @@ iec104_command* iec104_add_slave_rd_cmd( iec104_slave *slave )
 	iec104_command *new_ptr = NULL;
 	uint16_t cmd_num = slave->iec104_read_cmd_num++;
 
-	new_ptr = (iec104_command*) malloc(slave->iec104_read_cmd_num * sizeof(iec104_command) );
+	new_ptr = (iec104_command*) malloc(slave->iec104_read_cmd_num * sizeof(iec104_command) );		//FIXME add malloc error
 	for(int i=0; i< cmd_num; i++)
 		new_ptr[i] = slave->iec104_read_cmds[i];
 	if (slave->iec104_read_cmds != NULL)
@@ -713,7 +713,7 @@ iec104_command*  iec104_add_slave_wr_cmd( iec104_slave *slave )
 	iec104_command *new_ptr = NULL;
 	uint16_t cmd_num = slave->iec104_write_cmd_num++;
 
-	new_ptr = (iec104_command*) malloc(slave->iec104_write_cmd_num * sizeof(iec104_command) );
+	new_ptr = (iec104_command*) malloc(slave->iec104_write_cmd_num * sizeof(iec104_command) );	//FIXME add malloc error
 	for(int i=0; i< cmd_num; i++)
 		new_ptr[i] = slave->iec104_write_cmds[i];
 	if (slave->iec104_write_cmds != NULL)
