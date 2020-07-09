@@ -1051,7 +1051,8 @@ static int read_io_status(modbus_t *ctx, int function,
 
     rc = send_msg(ctx, req, req_length);
     if (rc > 0) {
-        int i, temp, bit;
+        int i;
+//        int temp, bit;
         int pos = 0;
         int offset;
         int offset_end;
@@ -1068,13 +1069,14 @@ static int read_io_status(modbus_t *ctx, int function,
         offset_end = offset + rc;
         for (i = offset; i < offset_end; i++) {
             /* Shift reg hi_byte to temp */
-            temp = rsp[i];
+/*            temp = rsp[i];					// TODO iec2modbus integration changes
 
             for (bit = 0x01; (bit & 0xff) && (pos < nb);) {
                 dest[pos++] = (temp & bit) ? TRUE : FALSE;
                 bit = bit << 1;
             }
-
+*/
+            dest[pos++] = rsp[i];		// TODO iec2modbus integration changes
         }
     }
 
