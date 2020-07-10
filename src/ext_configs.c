@@ -25,12 +25,15 @@
  	switch (cmd->mb_func)
  	{
  		case MODBUS_FC_READ_COILS:
- 		case MODBUS_FC_WRITE_SINGLE_COIL:
- 		case MODBUS_FC_WRITE_MULTIPLE_COILS:
+  		case MODBUS_FC_WRITE_MULTIPLE_COILS:
  		case MODBUS_FC_READ_DISCRETE_INPUTS:
  		{
  			size_in_bytes = (cmd->mb_data_size >> 3) + 1;
  		}break;
+ 		case MODBUS_FC_WRITE_SINGLE_COIL:
+ 		{
+ 		 	size_in_bytes =  sizeof(uint8_t);
+ 		 }break;
  		case MODBUS_FC_READ_HOLDING_REGISTERS:
  		case MODBUS_FC_READ_INPUT_REGISTERS:
  		case MODBUS_FC_WRITE_MULTIPLE_REGISTERS:
