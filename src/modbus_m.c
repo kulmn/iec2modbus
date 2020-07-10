@@ -35,41 +35,31 @@ int modbus_write(modbus_t *mb_ptr, Modbus_Slave_TypeDef *slave)	//FIXME ALL
 
 	for (int i = 0; i < slave->mb_write_cmd_num; i++)
 	{
-		switch (slave->mb_write_cmds[i].mb_func)
+		if (slave->mb_write_cmds[i].value->mem_state == mem_new)
 		{
-			case MODBUS_FC_WRITE_SINGLE_COIL: {
-				if (slave->mb_write_cmds[i].value->mem_state == mem_new)
-				{
+			pthread_mutex_lock(&slave->mb_write_cmds[i].value->lock);
+			switch (slave->mb_write_cmds[i].mb_func)
+			{
+				case MODBUS_FC_WRITE_SINGLE_COIL: {
 					int status = (uint8_t) slave->mb_write_cmds[i].value->mem_ptr[0];
 					rc = modbus_write_bit(mb_ptr, slave->mb_write_cmds[i].mb_data_addr, status );
 					slave->mb_write_cmds[i].value->mem_state = mem_cur;
-				}
-			}break;
-			case MODBUS_FC_WRITE_MULTIPLE_COILS:		// FIXME
-			{
-//				if (slave->write_cmnds[i].mem_state == mem_new)
-//				{
-//					rc = modbus_write_bits(mb_ptr, slave->write_cmnds[i].mb_data_addr, slave->write_cmnds[i].mb_data_size, slave->write_cmnds[i].mem_ptr );
-//				}
-			}break;
-			case MODBUS_FC_WRITE_SINGLE_REGISTER:
-			{
-				if (slave->mb_write_cmds[i].value->mem_state == mem_new)
+				}break;
+				case MODBUS_FC_WRITE_MULTIPLE_COILS:	// FIXME
 				{
+//					rc = modbus_write_bits(mb_ptr, slave->write_cmnds[i].mb_data_addr, slave->write_cmnds[i].mb_data_size, slave->write_cmnds[i].mem_ptr );
+				}break;
+				case MODBUS_FC_WRITE_SINGLE_REGISTER: {
 					uint16_t data = (uint16_t) slave->mb_write_cmds[i].value->mem_ptr[0];
 					rc = modbus_write_register(mb_ptr, slave->mb_write_cmds[i].mb_data_addr, data );
 					slave->mb_write_cmds[i].value->mem_state = mem_cur;
-				}
-			}break;
-			case MODBUS_FC_WRITE_MULTIPLE_REGISTERS:
-			{
-				if (slave->mb_write_cmds[i].value->mem_state == mem_new)
-				{
-					rc = modbus_write_registers(mb_ptr, slave->mb_write_cmds[i].mb_data_addr,
-							slave->mb_write_cmds[i].mb_data_size, (const uint16_t*) slave->mb_write_cmds[i].value->mem_ptr );
+				}break;
+				case MODBUS_FC_WRITE_MULTIPLE_REGISTERS: {
+					rc = modbus_write_registers(mb_ptr, slave->mb_write_cmds[i].mb_data_addr, slave->mb_write_cmds[i].mb_data_size, (const uint16_t*) slave->mb_write_cmds[i].value->mem_ptr );
 					slave->mb_write_cmds[i].value->mem_state = mem_cur;
-				}
-			}break;
+				}break;
+			}
+			pthread_mutex_unlock(&slave->mb_write_cmds[i].value->lock);
 		}
 	}
 	return rc;

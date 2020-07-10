@@ -297,6 +297,7 @@ int iec104_send_changed_data(CS104_Slave slave, iec104_server *config, cfg_iec_p
 		int ca_addr = config->iec104_slave[j].iec_asdu_addr;
 		for (int x = 0; x < config->iec104_slave[j].iec104_read_cmd_num;  x++)
 		{
+			pthread_mutex_lock(&config->iec104_slave[j].iec104_read_cmds[x].value->lock);
 			data_state mem_state = config->iec104_slave[j].iec104_read_cmds[x].value->mem_state;
 			cfg_iec_prior iec_priority = config->iec104_slave[j].iec104_read_cmds[x].add_params.priority;
 
@@ -310,6 +311,7 @@ int iec104_send_changed_data(CS104_Slave slave, iec104_server *config, cfg_iec_p
 				}
 				CS101_ASDU_destroy(newAsdu );
 			}
+			pthread_mutex_unlock(&config->iec104_slave[j].iec104_read_cmds[x].value->lock);
 		}
 	}
 	return 0;
@@ -457,6 +459,7 @@ bool iec104_receive_cmd(iec104_command *cmd, InformationObject io, CS101_ASDU as
 {
 	if (CS101_ASDU_getCOT(asdu ) == CS101_COT_ACTIVATION)
 	{
+		pthread_mutex_lock(&cmd->value->lock);
 		switch (cmd->iec_func)
 		{
 			case C_SC_NA_1: 				// Single command
@@ -489,6 +492,7 @@ bool iec104_receive_cmd(iec104_command *cmd, InformationObject io, CS101_ASDU as
 
 		}
 		CS101_ASDU_setCOT(asdu, CS101_COT_ACTIVATION_CON );
+		pthread_mutex_unlock(&cmd->value->lock);
 
 	} else CS101_ASDU_setCOT(asdu, CS101_COT_UNKNOWN_COT );
 
@@ -566,6 +570,7 @@ static bool interrogation_command(iec104_server *config, IMasterConnection conne
 			uint8_t mb_addr = config->iec104_slave[j].iec_asdu_addr;
 			for (int x = 0; x < config->iec104_slave[j].iec104_read_cmd_num;  x++)	// slave read commands number
 			{
+				pthread_mutex_lock(&config->iec104_slave[j].iec104_read_cmds[x].value->lock);
 				newAsdu = CS101_ASDU_create(alParams, false, CS101_COT_INTERROGATED_BY_STATION, 0, mb_addr, false, false );
 				if ((config->iec104_slave[j].iec104_read_cmds[x].value->mem_state != mem_init) || config->iec104_slave[j].iec104_read_cmds[x].value->mem_state != mem_err)
 				{
@@ -573,6 +578,7 @@ static bool interrogation_command(iec104_server *config, IMasterConnection conne
 						IMasterConnection_sendASDU(connection, newAsdu );
 				}
 				CS101_ASDU_destroy(newAsdu );
+				pthread_mutex_unlock(&config->iec104_slave[j].iec104_read_cmds[x].value->lock);
 			}
 		}
 

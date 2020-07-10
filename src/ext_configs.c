@@ -87,6 +87,11 @@ bool allocate_cmd_memory(Transl_Config_TypeDef *config, iec104_server *iec104_se
 			for (int x = 0; x < config->serialport[i].mb_slave[j].mb_write_cmd_num; x++) // Modbus slave write commands num
 			{
 				data_mem *ptr = malloc(sizeof(data_mem) );
+				 if (pthread_mutex_init(&ptr->lock, NULL) != 0)
+				{
+					 slog_error("mutex init failed");
+					 return false;					// FIXME
+				}
 				config->serialport[i].mb_slave[j].mb_write_cmds[x].value = ptr;
 				iec104_server->iec104_slave[iec104_slave_cnt].iec104_write_cmds[x].value =ptr;
 				allocate_all_cmd_memory(&config->serialport[i].mb_slave[j].mb_write_cmds[x] );
