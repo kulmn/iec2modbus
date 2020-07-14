@@ -10,11 +10,10 @@
 
 
 #include <string.h>
+#include <inttypes.h>
 
-#include "cs101_slave.h"
-#include "hal_thread.h"
 #include "memory.h"
-#include "libmodbus/modbus.h"
+#include "modbus_m.h"
 #include "iec104_server.h"
 
 
@@ -53,71 +52,22 @@ typedef enum
 
 
 
-typedef struct  {
-	uint8_t				mb_func;
-	uint16_t				mb_data_addr;
-	uint16_t				mb_data_size;
-	data_mem			*value;
-}modbus_command;
-
 
 
 typedef struct  {
-	uint8_t					mb_slave_addr;
-	uint8_t					mb_read_cmd_num;
-	modbus_command		*mb_read_cmds;
-	uint8_t					mb_write_cmd_num;
-	modbus_command		*mb_write_cmds;
-} Modbus_Slave_TypeDef;
-
-
-
-typedef struct  {
-	modbus_t					*mb_protocol_ptr;
-	Thread						mb_thread;
-	bool						mb_thread_run;
-	bool						mb_thread_stop;
-	uint8_t						num_slaves;
-	Modbus_Slave_TypeDef		*mb_slave;
-	uint16_t						recv_timeout;
-}Modbus_Master;
-
-
-typedef struct  {
-	char*						device;
-	uint16_t						baud;
-	uint8_t						data_bit;
-	char						parity;
-	uint8_t						stop_bit;
+	SerialPort					serial_port;				// SerialPort (lib60870-C)
 	cfg_ser_protocol				protocol;
 
-	Modbus_Master				mb_master;
-//	uint16_t						recv_timeout;
+//	Modbus_Master				mb_master;
+	void*						protocol_ptr;
 
-//	modbus_t					*mb_protocol_ptr;
-//	Thread						mb_thread;
-//	bool						mb_thread_run;
-//	bool						mb_thread_stop;
-
-//	Modbus_Slave_TypeDef		*mb_slave;
-//	uint8_t						num_slaves;
-
-} Serial_Port_TypeDef;
-
-
-
+} Virt_Port;
 
 
 typedef struct  {
 	uint8_t						log_level;
-//	uint16_t						iec104_send_rate;
-	Serial_Port_TypeDef			*serialport;
+	Virt_Port					*virt_port;
 	uint8_t						num_ports;
-
-//	uint16_t						iec104_slave_num;
-//	iec104_slave					*iec104_slave;
-
-//	iec104_server				iec104_server;
 } Transl_Config_TypeDef;
 
 

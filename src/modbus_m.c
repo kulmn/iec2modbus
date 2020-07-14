@@ -8,11 +8,12 @@
 
 #include <stdbool.h>
 #include <stdlib.h>
+# include <stdint.h>
 #include <errno.h>
+#include <string.h>
 
+//#include "lib_memory.h"
 #include "modbus_m.h"
-
-#include "libmodbus/modbus.h"
 #include "slog.h"
 
 #ifdef MOXA_UC8410
@@ -134,10 +135,24 @@ int modbus_read(modbus_t* mb_ptr, Modbus_Slave_TypeDef *slave)
 }
 
 
-int Modbus_Init(Serial_Port_TypeDef *port, bool debug)
+Modbus_Master *Modbus_create(void)
+{
+	Modbus_Master* self = (Modbus_Master*) malloc(sizeof(Modbus_Master));
+
+    if (self != NULL) {
+
+    }
+
+    return self;
+}
+
+
+int Modbus_Init(SerialPort port, Modbus_Master *master, bool debug)
 {
 	modbus_t *ctx = NULL;
-	ctx = modbus_new_rtu((const char*) port->device, port->baud, port->parity, port->data_bit, port->stop_bit );
+
+//	ctx = modbus_new_rtu((const char*) port->device, port->baud, port->parity, port->data_bit, port->stop_bit );
+	ctx = modbus_new_rtu(port->interfaceName, port->baudRate, port->parity, port->dataBits, port->stopBits );
 	if (ctx == NULL)
 	{
 		slog_error("Unable to allocate libmodbus context" );
@@ -148,11 +163,11 @@ int Modbus_Init(Serial_Port_TypeDef *port, bool debug)
 //	modbus_set_error_recovery(ctx, MODBUS_ERROR_RECOVERY_LINK | MODBUS_ERROR_RECOVERY_PROTOCOL );
 	modbus_set_error_recovery(ctx, MODBUS_ERROR_RECOVERY_NONE );
 	modbus_set_byte_timeout(ctx, -1, 0 );			// disabled
-	modbus_set_response_timeout(ctx, 0, (port->mb_master.recv_timeout)*1000 );
+	modbus_set_response_timeout(ctx, 0, (master->recv_timeout)*1000 );
 
-	port->mb_master.mb_thread = NULL;
-	port->mb_master.mb_protocol_ptr = NULL;
-	port->mb_master.mb_thread_run = false;
+	master->mb_thread = NULL;
+	master->mb_protocol_ptr = NULL;
+	master->mb_thread_run = false;
 
 	if (modbus_connect(ctx ) == -1)
 	{
@@ -168,8 +183,8 @@ int Modbus_Init(Serial_Port_TypeDef *port, bool debug)
 		return 1;
 	}
 #endif
-	port->mb_master.mb_protocol_ptr = ctx;
-	port->mb_master.mb_thread_run = false;
+	master->mb_protocol_ptr = ctx;
+	master->mb_thread_run = false;
 	return 0;
 }
 
@@ -245,5 +260,6 @@ void Modbus_Thread_Stop(Modbus_Master *master)
 		free(master->mb_slave[j].mb_write_cmds);
 	}
 	free(master->mb_slave);
+	free(master);
 
 }

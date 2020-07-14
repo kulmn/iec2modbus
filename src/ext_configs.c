@@ -64,14 +64,43 @@
  	return true;
  }
 
-bool allocate_cmd_memory(Transl_Config_TypeDef *config, iec104_server *iec104_server)
+bool allocate_slave_cmd_memory(Modbus_Slave_TypeDef *mb_slave, iec104_server *iec104_server, uint8_t iec104_slave_cnt)
 {
-	uint8_t iec104_slave_cnt = 0;
-	for (int i = 0; i < config->num_ports; i++)	// Serial ports num
+	for (int x = 0; x < mb_slave->mb_read_cmd_num; x++) // Modbus slave read commands num
 	{
-		for (int j = 0; j < config->serialport[i].mb_master.num_slaves; j++)// Modbus slaves num
+		data_mem *ptr = malloc(sizeof(data_mem) );//FIXME add malloc error
+		if (pthread_mutex_init(&ptr->lock, NULL ) != 0)
 		{
-			for (int x = 0; x < config->serialport[i].mb_master.mb_slave[j].mb_read_cmd_num; x++) // Modbus slave read commands num
+			slog_error("mutex init failed" );
+			return false;					// FIXME
+		}
+		mb_slave->mb_read_cmds[x].value = ptr;
+		iec104_server->iec104_slave[iec104_slave_cnt].iec104_read_cmds[x].value = ptr;
+		allocate_all_cmd_memory(&mb_slave->mb_read_cmds[x] );
+	}
+
+	for (int x = 0; x < mb_slave->mb_write_cmd_num; x++) // Modbus slave write commands num
+	{
+		data_mem *ptr = malloc(sizeof(data_mem) );
+		if (pthread_mutex_init(&ptr->lock, NULL ) != 0)
+		{
+			slog_error("mutex init failed" );
+			return false;					// FIXME
+		}
+		mb_slave->mb_write_cmds[x].value = ptr;
+		iec104_server->iec104_slave[iec104_slave_cnt].iec104_write_cmds[x].value = ptr;
+		allocate_all_cmd_memory(&mb_slave->mb_write_cmds[x] );
+	}
+	iec104_slave_cnt++;
+
+	return true;
+}
+/*
+bool allocate_cmd_memory(Modbus_Master *mb_master, iec104_server *iec104_server, uint8_t iec104_slave_cnt)
+{
+		for (int j = 0; j < mb_master->num_slaves; j++)// Modbus slaves num
+		{
+			for (int x = 0; x < mb_master->mb_slave[j].mb_read_cmd_num; x++) // Modbus slave read commands num
 			{
 				data_mem *ptr = malloc(sizeof(data_mem) );			//FIXME add malloc error
 				 if (pthread_mutex_init(&ptr->lock, NULL) != 0)
@@ -79,12 +108,12 @@ bool allocate_cmd_memory(Transl_Config_TypeDef *config, iec104_server *iec104_se
 					 slog_error("mutex init failed");
 					 return false;					// FIXME
 				 }
-				config->serialport[i].mb_master.mb_slave[j].mb_read_cmds[x].value = ptr;
+				mb_master->mb_slave[j].mb_read_cmds[x].value = ptr;
 				iec104_server->iec104_slave[iec104_slave_cnt].iec104_read_cmds[x].value =ptr;
-				allocate_all_cmd_memory(&config->serialport[i].mb_master.mb_slave[j].mb_read_cmds[x] );
+				allocate_all_cmd_memory(&mb_master->mb_slave[j].mb_read_cmds[x] );
 			}
 
-			for (int x = 0; x < config->serialport[i].mb_master.mb_slave[j].mb_write_cmd_num; x++) // Modbus slave write commands num
+			for (int x = 0; x < mb_master->mb_slave[j].mb_write_cmd_num; x++) // Modbus slave write commands num
 			{
 				data_mem *ptr = malloc(sizeof(data_mem) );
 				 if (pthread_mutex_init(&ptr->lock, NULL) != 0)
@@ -92,17 +121,16 @@ bool allocate_cmd_memory(Transl_Config_TypeDef *config, iec104_server *iec104_se
 					 slog_error("mutex init failed");
 					 return false;					// FIXME
 				}
-				config->serialport[i].mb_master.mb_slave[j].mb_write_cmds[x].value = ptr;
+				 mb_master->mb_slave[j].mb_write_cmds[x].value = ptr;
 				iec104_server->iec104_slave[iec104_slave_cnt].iec104_write_cmds[x].value =ptr;
-				allocate_all_cmd_memory(&config->serialport[i].mb_master.mb_slave[j].mb_write_cmds[x] );
+				allocate_all_cmd_memory(&mb_master->mb_slave[j].mb_write_cmds[x] );
 			}
 			iec104_slave_cnt++;
 		}
-	}
 
 	return true;
 }
-
+*/
 bool read_json_file(const char *filename, struct json_object **parsed_json)
 {
 	FILE *fp = NULL;
@@ -464,7 +492,7 @@ bool read_config_file(const char *filename,Transl_Config_TypeDef *config ,iec104
 
 	json_object_object_get_ex(parsed_json, "serial_ports", &ports );
 	config->num_ports = json_object_array_length(ports );
-	config->serialport = (Serial_Port_TypeDef*) malloc(config->num_ports * sizeof(Serial_Port_TypeDef) );
+	config->virt_port = (Virt_Port*) malloc(config->num_ports * sizeof(Virt_Port) );
 
 
 	for (int i = 0; i < config->num_ports; i++)
@@ -482,51 +510,54 @@ bool read_config_file(const char *filename,Transl_Config_TypeDef *config ,iec104
 
 		// linux device string
 		tmp_json = json_object_array_get_idx(port_device, cfg_ser_device);
-		str = json_object_get_string(tmp_json );
+		const char* interfaceName = json_object_get_string(tmp_json );
 		if (strlen(str ) == 0)
 		{
 			slog_warn("Serial port %d device not specified. for example '/dev/ttyS0' ", i );
 //			return NULL;	FIXME
 		}
-		config->serialport[i].device = (char*) malloc((strlen(str ) + 1) * sizeof(char) );
-		strcpy(config->serialport[i].device, str );
 		// port baudrate
 		tmp_json = json_object_array_get_idx(port_device, cfg_port_baudrate);
-		config->serialport[i].baud = json_object_get_int(tmp_json);
+		int baudRate = json_object_get_int(tmp_json);
 		// port data bit
 		tmp_json = json_object_array_get_idx(port_device, cfg_port_data_bit);
-		config->serialport[i].data_bit = json_object_get_int(tmp_json);
+		uint8_t dataBits = json_object_get_int(tmp_json);
 		// port parity
 		tmp_json = json_object_array_get_idx(port_device, cfg_port_parity);
 		str = json_object_get_string(tmp_json);
-		config->serialport[i].parity = (char) *str;
+		char parity = (char) *str;
 		// port stop bit
 		tmp_json = json_object_array_get_idx(port_device, cfg_port_stop_bit);
-		config->serialport[i].stop_bit = json_object_get_int(tmp_json);
+		uint8_t stopBits = json_object_get_int(tmp_json);
+		config->virt_port[i].serial_port = SerialPort_create(interfaceName, baudRate, dataBits, parity, stopBits);
 
 		// parse protocol
 		json_object_object_get_ex(cur_port, "Protocol", &tmp_json );
 		str = json_object_get_string(tmp_json);
-		if ( !strcmp(str, "modbus_rtu_master") )  config->serialport[i].protocol = cfg_modbus_rtu_m;
-		else if ( !strcmp(str, "modbus_rtu_slave") ) config->serialport[i].protocol = cfg_modbus_rtu_s;
-		else if ( !strcmp(str, "iec_60870-5-101") ) config->serialport[i].protocol = cfg_iec_101;
-		else if ( !strcmp(str, "iec_60870-5-103") ) config->serialport[i].protocol = cfg_iec_103;
+		if ( !strcmp(str, "modbus_rtu_master") )
+		{
+			config->virt_port[i].protocol = cfg_modbus_rtu_m;
+			config->virt_port[i].protocol_ptr = (Modbus_Master *) Modbus_create();
+		}
+		else if ( !strcmp(str, "modbus_rtu_slave") ) config->virt_port[i].protocol = cfg_modbus_rtu_s;
+		else if ( !strcmp(str, "iec_60870-5-101") ) config->virt_port[i].protocol = cfg_iec_101;
+		else if ( !strcmp(str, "iec_60870-5-103") ) config->virt_port[i].protocol = cfg_iec_103;
 		else
 		{
 			slog_error( "Wrong serial protocol: '%s' .", str);
 			return false;
 		}
+		Modbus_Master * mb_master = (Modbus_Master*) config->virt_port[i].protocol_ptr;
 
-		config->serialport[i].mb_master.recv_timeout = json_object_get_int(tmp_json);
 		// parse modbus answer timeout
 		json_object_object_get_ex(cur_port, "answer_timeout_ms", &tmp_json );
-		config->serialport[i].mb_master.recv_timeout = json_object_get_int(tmp_json);
+		mb_master->recv_timeout = json_object_get_int(tmp_json);
 
 		// parse modbus slaves param
 		json_object_object_get_ex(cur_port, "slave", &mb_slaves );
-		config->serialport[i].mb_master.num_slaves= json_object_array_length(mb_slaves );
-		config->serialport[i].mb_master.mb_slave =
-				(Modbus_Slave_TypeDef*) malloc(config->serialport[i].mb_master.num_slaves * sizeof(Modbus_Slave_TypeDef) );
+		mb_master->num_slaves= json_object_array_length(mb_slaves );
+		mb_master->mb_slave =
+				(Modbus_Slave_TypeDef*) malloc(mb_master->num_slaves * sizeof(Modbus_Slave_TypeDef) );
 	}
 
 	iec104_server->iec104_slave_num = 0;
@@ -534,18 +565,20 @@ bool read_config_file(const char *filename,Transl_Config_TypeDef *config ,iec104
 	uint8_t iec104_slave_cnt = 0;
 	for (int i = 0; i < config->num_ports; i++)
 	{
+		Modbus_Master * mb_master = (Modbus_Master*) config->virt_port[i].protocol_ptr;
+
 		cur_port = json_object_array_get_idx(ports, i );
 
 		// parse modbus slaves param
 		json_object_object_get_ex(cur_port, "slave", &mb_slaves );
 
-		for (int j = 0; j < config->serialport[i].mb_master.num_slaves; j++)
+		for (int j = 0; j < mb_master->num_slaves; j++)
 		{
 			cur_slave = json_object_array_get_idx(mb_slaves, j );
 			// slave addr
 			json_object_object_get_ex(cur_slave, "slave_address", &tmp_json );
 			int slave_addr = json_object_get_int(tmp_json );
-			config->serialport[i].mb_master.mb_slave[j].mb_slave_addr = slave_addr;
+			mb_master->mb_slave[j].mb_slave_addr = slave_addr;
 			iec104_add_slave( iec104_server,  slave_addr );
 			// slave config file
 			json_object_object_get_ex(cur_slave, "slave_config_file", &tmp_json );
@@ -555,21 +588,22 @@ bool read_config_file(const char *filename,Transl_Config_TypeDef *config ,iec104
 			struct json_object *parsed_slave_json=NULL;
 			if (!read_json_file(str,&parsed_slave_json) )	return false;
 
-			if (!parse_slave_iec104_config(parsed_slave_json, &iec104_server->iec104_slave[iec104_slave_cnt++] ))
+			if (!parse_slave_iec104_config(parsed_slave_json, &iec104_server->iec104_slave[iec104_slave_cnt] ))
 			{
 				slog_error(" Loading : 'serial_ports:%d\\slave:%d\\slave_config_file: %s'  failed. ", i, j, str );
 				return false;
 			}
-			if (!parse_slave_modbus_config(parsed_slave_json, &config->serialport[i].mb_master.mb_slave[j] ))
+			if (!parse_slave_modbus_config(parsed_slave_json, &mb_master->mb_slave[j] ))
 			{
 				slog_error(" Loading : 'serial_ports:%d\\slave:%d\\slave_config_file: %s'  failed. ", i, j, str );
 				return false;
 			}
-			json_object_put(parsed_slave_json);	// free
+			json_object_put(parsed_slave_json);	// free json
+			// allocate data memory for commands
+			allocate_slave_cmd_memory(&mb_master->mb_slave[j], iec104_server, iec104_slave_cnt);
+			iec104_slave_cnt++;
 		}
 	}
-
-	allocate_cmd_memory(config, iec104_server);
 
 	json_object_put(parsed_json);	// free
 	slog_info( "Config file: '%s' successful read", filename);

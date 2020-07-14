@@ -10,6 +10,7 @@ static bool running = true;
 
 
 
+
 void sigint_handler(int signalId)
 {
     running = false;
@@ -70,16 +71,16 @@ int main(int argc, char *argv[])
 	// start modbus master
 	for (uint8_t i = 0; i < config.num_ports; i++)
 	{
-		switch (config.serialport[i].protocol)
+		switch (config.virt_port[i].protocol)
 		{
 			case cfg_modbus_rtu_m:
 			{
-				if (Modbus_Init(&config.serialport[i], mb_debug ) == 0)
+				if (Modbus_Init(config.virt_port[i].serial_port, (Modbus_Master*) config.virt_port[i].protocol_ptr, mb_debug ) == 0)
 				{
-					Modbus_Thread_Start(&config.serialport[i].mb_master );
-					slog_info("Start modbus on serial port %s", config.serialport[i].device );
+					Modbus_Thread_Start( (Modbus_Master*) config.virt_port[i].protocol_ptr );
+					slog_info("Start modbus on serial port %s", config.virt_port[i].serial_port->interfaceName);
 				} else
-					slog_warn("Modbus master on serial port %s not started ", config.serialport[i].device );
+					slog_warn("Modbus master on serial port %s not started ", config.virt_port[i].serial_port->interfaceName );
 			}break;
 			case cfg_modbus_rtu_s:
 			{
@@ -128,12 +129,12 @@ int main(int argc, char *argv[])
 	// stop serials protocols
 	for (uint8_t i = 0; i < config.num_ports; i++)
 	{
-		switch (config.serialport[i].protocol)
+		switch (config.virt_port[i].protocol)
 		{
 			case cfg_modbus_rtu_m:
 			{
-				slog_info( "Stop modbus on serial port %s", config.serialport[i].device);
-				Modbus_Thread_Stop(&config.serialport[i].mb_master);
+				slog_info( "Stop modbus on serial port %s", config.virt_port[i].serial_port->interfaceName);
+				Modbus_Thread_Stop((Modbus_Master*) config.virt_port[i].protocol_ptr);
 			}break;
 			case cfg_modbus_rtu_s:
 			{
@@ -153,6 +154,7 @@ int main(int argc, char *argv[])
 
 	iec104_server_stop( &iec104_server);
 	slog_info( "Stop iec104 server");
+
 
 
 
