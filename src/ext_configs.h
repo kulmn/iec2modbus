@@ -71,6 +71,18 @@ typedef struct  {
 } Modbus_Slave_TypeDef;
 
 
+
+typedef struct  {
+	modbus_t					*mb_protocol_ptr;
+	Thread						mb_thread;
+	bool						mb_thread_run;
+	bool						mb_thread_stop;
+	uint8_t						num_slaves;
+	Modbus_Slave_TypeDef		*mb_slave;
+	uint16_t						recv_timeout;
+}Modbus_Master;
+
+
 typedef struct  {
 	char*						device;
 	uint16_t						baud;
@@ -78,15 +90,18 @@ typedef struct  {
 	char						parity;
 	uint8_t						stop_bit;
 	cfg_ser_protocol				protocol;
-	uint16_t						recv_timeout;
 
-	modbus_t					*mb_protocol_ptr;
-	Thread						mb_thread;
-	bool						mb_thread_run;
-	bool						mb_thread_stop;
+	Modbus_Master				mb_master;
+//	uint16_t						recv_timeout;
 
-	Modbus_Slave_TypeDef		*mb_slave;
-	uint8_t						num_slaves;
+//	modbus_t					*mb_protocol_ptr;
+//	Thread						mb_thread;
+//	bool						mb_thread_run;
+//	bool						mb_thread_stop;
+
+//	Modbus_Slave_TypeDef		*mb_slave;
+//	uint8_t						num_slaves;
+
 } Serial_Port_TypeDef;
 
 

@@ -10,8 +10,6 @@ static bool running = true;
 
 
 
-
-
 void sigint_handler(int signalId)
 {
     running = false;
@@ -78,7 +76,7 @@ int main(int argc, char *argv[])
 			{
 				if (Modbus_Init(&config.serialport[i], mb_debug ) == 0)
 				{
-					Modbus_Thread_Start(&config.serialport[i] );
+					Modbus_Thread_Start(&config.serialport[i].mb_master );
 					slog_info("Start modbus on serial port %s", config.serialport[i].device );
 				} else
 					slog_warn("Modbus master on serial port %s not started ", config.serialport[i].device );
@@ -135,7 +133,7 @@ int main(int argc, char *argv[])
 			case cfg_modbus_rtu_m:
 			{
 				slog_info( "Stop modbus on serial port %s", config.serialport[i].device);
-				Modbus_Thread_Stop(&config.serialport[i]);
+				Modbus_Thread_Stop(&config.serialport[i].mb_master);
 			}break;
 			case cfg_modbus_rtu_s:
 			{
@@ -155,6 +153,7 @@ int main(int argc, char *argv[])
 
 	iec104_server_stop( &iec104_server);
 	slog_info( "Stop iec104 server");
+
 
 
 	slog_warn( "Stop programm. \n");

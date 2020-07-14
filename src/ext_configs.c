@@ -69,9 +69,9 @@ bool allocate_cmd_memory(Transl_Config_TypeDef *config, iec104_server *iec104_se
 	uint8_t iec104_slave_cnt = 0;
 	for (int i = 0; i < config->num_ports; i++)	// Serial ports num
 	{
-		for (int j = 0; j < config->serialport[i].num_slaves; j++)// Modbus slaves num
+		for (int j = 0; j < config->serialport[i].mb_master.num_slaves; j++)// Modbus slaves num
 		{
-			for (int x = 0; x < config->serialport[i].mb_slave[j].mb_read_cmd_num; x++) // Modbus slave read commands num
+			for (int x = 0; x < config->serialport[i].mb_master.mb_slave[j].mb_read_cmd_num; x++) // Modbus slave read commands num
 			{
 				data_mem *ptr = malloc(sizeof(data_mem) );			//FIXME add malloc error
 				 if (pthread_mutex_init(&ptr->lock, NULL) != 0)
@@ -79,12 +79,12 @@ bool allocate_cmd_memory(Transl_Config_TypeDef *config, iec104_server *iec104_se
 					 slog_error("mutex init failed");
 					 return false;					// FIXME
 				 }
-				config->serialport[i].mb_slave[j].mb_read_cmds[x].value = ptr;
+				config->serialport[i].mb_master.mb_slave[j].mb_read_cmds[x].value = ptr;
 				iec104_server->iec104_slave[iec104_slave_cnt].iec104_read_cmds[x].value =ptr;
-				allocate_all_cmd_memory(&config->serialport[i].mb_slave[j].mb_read_cmds[x] );
+				allocate_all_cmd_memory(&config->serialport[i].mb_master.mb_slave[j].mb_read_cmds[x] );
 			}
 
-			for (int x = 0; x < config->serialport[i].mb_slave[j].mb_write_cmd_num; x++) // Modbus slave write commands num
+			for (int x = 0; x < config->serialport[i].mb_master.mb_slave[j].mb_write_cmd_num; x++) // Modbus slave write commands num
 			{
 				data_mem *ptr = malloc(sizeof(data_mem) );
 				 if (pthread_mutex_init(&ptr->lock, NULL) != 0)
@@ -92,9 +92,9 @@ bool allocate_cmd_memory(Transl_Config_TypeDef *config, iec104_server *iec104_se
 					 slog_error("mutex init failed");
 					 return false;					// FIXME
 				}
-				config->serialport[i].mb_slave[j].mb_write_cmds[x].value = ptr;
+				config->serialport[i].mb_master.mb_slave[j].mb_write_cmds[x].value = ptr;
 				iec104_server->iec104_slave[iec104_slave_cnt].iec104_write_cmds[x].value =ptr;
-				allocate_all_cmd_memory(&config->serialport[i].mb_slave[j].mb_write_cmds[x] );
+				allocate_all_cmd_memory(&config->serialport[i].mb_master.mb_slave[j].mb_write_cmds[x] );
 			}
 			iec104_slave_cnt++;
 		}
@@ -517,15 +517,16 @@ bool read_config_file(const char *filename,Transl_Config_TypeDef *config ,iec104
 			return false;
 		}
 
-		config->serialport[i].recv_timeout = json_object_get_int(tmp_json);
+		config->serialport[i].mb_master.recv_timeout = json_object_get_int(tmp_json);
 		// parse modbus answer timeout
 		json_object_object_get_ex(cur_port, "answer_timeout_ms", &tmp_json );
-		config->serialport[i].recv_timeout = json_object_get_int(tmp_json);
+		config->serialport[i].mb_master.recv_timeout = json_object_get_int(tmp_json);
 
 		// parse modbus slaves param
 		json_object_object_get_ex(cur_port, "slave", &mb_slaves );
-		config->serialport[i].num_slaves= json_object_array_length(mb_slaves );
-		config->serialport[i].mb_slave = (Modbus_Slave_TypeDef*) malloc(config->serialport[i].num_slaves * sizeof(Modbus_Slave_TypeDef) );
+		config->serialport[i].mb_master.num_slaves= json_object_array_length(mb_slaves );
+		config->serialport[i].mb_master.mb_slave =
+				(Modbus_Slave_TypeDef*) malloc(config->serialport[i].mb_master.num_slaves * sizeof(Modbus_Slave_TypeDef) );
 	}
 
 	iec104_server->iec104_slave_num = 0;
@@ -538,13 +539,13 @@ bool read_config_file(const char *filename,Transl_Config_TypeDef *config ,iec104
 		// parse modbus slaves param
 		json_object_object_get_ex(cur_port, "slave", &mb_slaves );
 
-		for (int j = 0; j < config->serialport[i].num_slaves; j++)
+		for (int j = 0; j < config->serialport[i].mb_master.num_slaves; j++)
 		{
 			cur_slave = json_object_array_get_idx(mb_slaves, j );
 			// slave addr
 			json_object_object_get_ex(cur_slave, "slave_address", &tmp_json );
 			int slave_addr = json_object_get_int(tmp_json );
-			config->serialport[i].mb_slave[j].mb_slave_addr = slave_addr;
+			config->serialport[i].mb_master.mb_slave[j].mb_slave_addr = slave_addr;
 			iec104_add_slave( iec104_server,  slave_addr );
 			// slave config file
 			json_object_object_get_ex(cur_slave, "slave_config_file", &tmp_json );
@@ -559,7 +560,7 @@ bool read_config_file(const char *filename,Transl_Config_TypeDef *config ,iec104
 				slog_error(" Loading : 'serial_ports:%d\\slave:%d\\slave_config_file: %s'  failed. ", i, j, str );
 				return false;
 			}
-			if (!parse_slave_modbus_config(parsed_slave_json, &config->serialport[i].mb_slave[j] ))
+			if (!parse_slave_modbus_config(parsed_slave_json, &config->serialport[i].mb_master.mb_slave[j] ))
 			{
 				slog_error(" Loading : 'serial_ports:%d\\slave:%d\\slave_config_file: %s'  failed. ", i, j, str );
 				return false;

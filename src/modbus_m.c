@@ -148,11 +148,11 @@ int Modbus_Init(Serial_Port_TypeDef *port, bool debug)
 //	modbus_set_error_recovery(ctx, MODBUS_ERROR_RECOVERY_LINK | MODBUS_ERROR_RECOVERY_PROTOCOL );
 	modbus_set_error_recovery(ctx, MODBUS_ERROR_RECOVERY_NONE );
 	modbus_set_byte_timeout(ctx, -1, 0 );			// disabled
-	modbus_set_response_timeout(ctx, 0, (port->recv_timeout)*1000 );
+	modbus_set_response_timeout(ctx, 0, (port->mb_master.recv_timeout)*1000 );
 
-	port->mb_thread = NULL;
-	port->mb_protocol_ptr = NULL;
-	port->mb_thread_run = false;
+	port->mb_master.mb_thread = NULL;
+	port->mb_master.mb_protocol_ptr = NULL;
+	port->mb_master.mb_thread_run = false;
 
 	if (modbus_connect(ctx ) == -1)
 	{
@@ -168,27 +168,27 @@ int Modbus_Init(Serial_Port_TypeDef *port, bool debug)
 		return 1;
 	}
 #endif
-	port->mb_protocol_ptr = ctx;
-	port->mb_thread_run = false;
+	port->mb_master.mb_protocol_ptr = ctx;
+	port->mb_master.mb_thread_run = false;
 	return 0;
 }
 
 
 static void* ModbusThread(void *parameter)
 {
-	Serial_Port_TypeDef *port = (Serial_Port_TypeDef*) parameter;
+	Modbus_Master *master = (Modbus_Master*) parameter;
 
-	while (port->mb_thread_stop == false)
+	while (master->mb_thread_stop == false)
 	{
-		for (int j = 0; j < port->num_slaves; j++)
+		for (int j = 0; j < master->num_slaves; j++)
 		{
 
-			if (modbus_write(port->mb_protocol_ptr, &port->mb_slave[j] ) == -1)
+			if (modbus_write(master->mb_protocol_ptr, &master->mb_slave[j] ) == -1)
 			{
 				// Error			FIXME
 			}
 			Thread_sleep(30);
-			if (modbus_read(port->mb_protocol_ptr, &port->mb_slave[j] ) == -1)
+			if (modbus_read(master->mb_protocol_ptr, &master->mb_slave[j] ) == -1)
 			{
 				// Error			FIXME
 			}
@@ -200,43 +200,50 @@ static void* ModbusThread(void *parameter)
 		Thread_sleep(1000 );
 	}
 
-	port->mb_thread_run = false;
-	port->mb_thread_stop = false;
+	master->mb_thread_run = false;
+	master->mb_thread_stop = false;
 
 //	exit_function:
 	return NULL;
 }
 
 
-void Modbus_Thread_Start(Serial_Port_TypeDef *port)
+void Modbus_Thread_Start(Modbus_Master *master)
 {
-	if (port->mb_thread_run == false)
+	if (master->mb_thread_run == false)
 	{
-		port->mb_thread_run = true;
-		port->mb_thread_stop = false;
-		port->mb_thread = Thread_create(ModbusThread, (void*) port, false );
-		Thread_start(port->mb_thread );
+		master->mb_thread_run = true;
+		master->mb_thread_stop = false;
+		master->mb_thread = Thread_create(ModbusThread, (void*) master, false );
+		Thread_start(master->mb_thread );
 	}
 }
 
-void Modbus_Thread_Stop(Serial_Port_TypeDef *port)
+void Modbus_Thread_Stop(Modbus_Master *master)
 {
-	if (port->mb_thread_run)
+	if (master->mb_thread_run)
 	{
-		port->mb_thread_stop = true;
-		while (port->mb_thread_run)
+		master->mb_thread_stop = true;
+		while (master->mb_thread_run)
 			Thread_sleep(1 );
 	}
-	if (port->mb_thread)
+	if (master->mb_thread)
 	{
-		Thread_destroy(port->mb_thread );
+		Thread_destroy(master->mb_thread );
 	}
-	port->mb_thread = NULL;
+	master->mb_thread = NULL;
 
-	if (port->mb_protocol_ptr != NULL)
+	if (master->mb_protocol_ptr != NULL)
 	{
-		modbus_close(port->mb_protocol_ptr );
-		modbus_free(port->mb_protocol_ptr );
+		modbus_close(master->mb_protocol_ptr );
+		modbus_free(master->mb_protocol_ptr );
 	}
+
+	for (int j = 0; j < master->num_slaves; j++)// Modbus slaves num
+	{
+		free(master->mb_slave[j].mb_read_cmds);
+		free(master->mb_slave[j].mb_write_cmds);
+	}
+	free(master->mb_slave);
 
 }
