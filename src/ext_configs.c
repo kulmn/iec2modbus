@@ -560,8 +560,7 @@ bool read_config_file(const char *filename,Transl_Config_TypeDef *config ,iec104
 				(Modbus_Slave_TypeDef*) malloc(mb_master->num_slaves * sizeof(Modbus_Slave_TypeDef) );
 	}
 
-	iec104_server->iec104_slave_num = 0;
-	iec104_server->iec104_slave = NULL;
+
 	uint8_t iec104_slave_cnt = 0;
 	for (int i = 0; i < config->num_ports; i++)
 	{

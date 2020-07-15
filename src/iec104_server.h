@@ -77,8 +77,8 @@ typedef struct  {
 
 
 
-CS104_Slave iec104_server_init( iec104_server *config, bool debug );
-int iec104_send_changed_data(CS104_Slave slave, iec104_server *config, cfg_iec_prior priority);
+iec104_server* iec104_server_init( bool debug );
+int iec104_send_changed_data( iec104_server *config, cfg_iec_prior priority);
 //void iec104_server_start(void);
 void iec104_server_stop( iec104_server *srv );
 void iec104_add_slave( iec104_server *srv, uint16_t asdu_addr );

@@ -285,11 +285,11 @@ int iec104_create_asdu(iec104_command *cmd, CS101_ASDU asdu)
 }
 
 
-int iec104_send_changed_data(CS104_Slave slave, iec104_server *config, cfg_iec_prior priority)
+int iec104_send_changed_data( iec104_server *config, cfg_iec_prior priority)
 {
 	CS101_AppLayerParameters alParams;
 	/* get the connection parameters - we need them to create correct ASDUs */
-	alParams = CS104_Slave_getAppLayerParameters(slave );
+	alParams = CS104_Slave_getAppLayerParameters(config->server );
 	CS101_ASDU newAsdu;
 
 	for (int j = 0; j < config->iec104_slave_num; j++)
@@ -306,7 +306,7 @@ int iec104_send_changed_data(CS104_Slave slave, iec104_server *config, cfg_iec_p
 				newAsdu = CS101_ASDU_create(alParams, false, CS101_COT_SPONTANEOUS, 0, ca_addr, false, false );
 				if (iec104_create_asdu(&config->iec104_slave[j].iec104_read_cmds[x], newAsdu ) == 0)
 				{
-					CS104_Slave_enqueueASDU(slave, newAsdu );
+					CS104_Slave_enqueueASDU(config->server, newAsdu );
 					if (mem_state != mem_err) config->iec104_slave[j].iec104_read_cmds[x].value->mem_state = mem_cur;
 				}
 				CS101_ASDU_destroy(newAsdu );
@@ -731,16 +731,24 @@ iec104_command*  iec104_add_slave_wr_cmd( iec104_slave *slave )
 
 
 
-CS104_Slave iec104_server_init( iec104_server *config, bool debug )
+iec104_server* iec104_server_init( bool debug )
 {
 	CS104_Slave slave = NULL;
+	iec104_server *iec_server = NULL;
 
+	iec_server = (iec104_server*) malloc( sizeof(iec104_server) );
+	if (iec_server == NULL)
+	{
+		slog_error("Unable to allocate %d bytes for iec104 server ", sizeof(iec104_server) );
+		return NULL;
+	}
 
 	Lib60870_enableDebugOutput(true);
 
 	/* create a new slave/server instance with default connection parameters and
 	 * default message queue size */
 	slave = CS104_Slave_create(100, 100 );
+
 	CS104_Slave_setLocalAddress(slave, "0.0.0.0" );
 	/* Set mode to a single redundancy group
 	 * NOTE: library has to be compiled with CONFIG_CS104_SUPPORT_SERVER_MODE_SINGLE_REDUNDANCY_GROUP enabled (=1)	 */
@@ -751,7 +759,7 @@ CS104_Slave iec104_server_init( iec104_server *config, bool debug )
 	/* set the callback handler for the interrogation command */
 //	CS104_Slave_setInterrogationHandler(slave, interrogationHandler, config );
 	/* set handler for other message types */
-	CS104_Slave_setASDUHandler(slave, asduHandler, config );
+	CS104_Slave_setASDUHandler(slave, asduHandler, iec_server );
 	/* set handler to handle connection requests (optional) */
 	CS104_Slave_setConnectionRequestHandler(slave, connectionRequestHandler, NULL );
 	/* set handler to track connection events (optional) */
@@ -760,7 +768,12 @@ CS104_Slave iec104_server_init( iec104_server *config, bool debug )
 	if (debug)
 	CS104_Slave_setRawMessageHandler(slave, rawMessageHandler, NULL);
 
-	return slave;
+	iec_server->server = slave;
+	iec_server->iec104_slave_num = 0;
+	iec_server->iec104_slave = NULL;
+	iec_server->iec104_send_rate = 30;
+
+	return iec_server;
 }
 
 void iec104_server_stop( iec104_server *srv )
@@ -787,6 +800,7 @@ void iec104_server_stop( iec104_server *srv )
 	}
 
 	free(srv->iec104_slave);
+	free(srv);
 }
 
 

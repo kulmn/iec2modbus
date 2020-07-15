@@ -10,7 +10,6 @@ static bool running = true;
 
 
 
-
 void sigint_handler(int signalId)
 {
     running = false;
@@ -19,8 +18,8 @@ void sigint_handler(int signalId)
 int main(int argc, char *argv[])
 {
 	Transl_Config_TypeDef	config;
-	iec104_server			iec104_server;
-//	CS104_Slave slave = NULL;
+	iec104_server*			iec104_server;
+
 
 	moxa_buzzer(100);
 	bool mb_debug = false, iec_debug = false;
@@ -38,10 +37,11 @@ int main(int argc, char *argv[])
 	slog_info( "Start  Version %d.%d build %s, %s.",VERSION_MAJOR, VERSION_MINOR,  __DATE__, __TIME__);
 
 
-	// read main config
+	// iec104 server create and init
+	iec104_server = iec104_server_init( iec_debug);
 
-	iec104_server.iec104_slave_num = 0;
-	if (! read_config_file("config.json",&config ,&iec104_server ))
+	// read main config
+	if (! read_config_file("config.json",&config ,iec104_server ))
 	{
 		slog_error( "Config file load failed.");
 		exit(EXIT_FAILURE );
@@ -52,20 +52,6 @@ int main(int argc, char *argv[])
 	pCfg.nLogLevel = config.log_level;
 	pCfg.nFileLevel = config.log_level;
 	slog_config_set(&pCfg);
-
-/*
-	if (allocate_read_cmd_memory(config) !=0 )
-	{
-		slog_error( "Failed allocate memory for read commands.");
-		exit(EXIT_FAILURE );
-	}
-
-	if (allocate_write_cmd_memory(config) !=0 )
-	{
-		slog_error( "Failed allocate memory for write commands.");
-		exit(EXIT_FAILURE );
-	}
-*/
 
 
 	// start modbus master
@@ -99,9 +85,9 @@ int main(int argc, char *argv[])
 
 
 	//slave = iec104_server_init(&config->iec104_server, iec_debug);
-	iec104_server.server = iec104_server_init(&iec104_server, iec_debug);
-	CS104_Slave_start(iec104_server.server );
-	if (CS104_Slave_isRunning(iec104_server.server ) == false)
+
+	CS104_Slave_start(iec104_server->server );
+	if (CS104_Slave_isRunning(iec104_server->server ) == false)
 	{
 		slog_error( "Starting iec104 server failed!");
 		exit(EXIT_FAILURE );
@@ -114,11 +100,11 @@ int main(int argc, char *argv[])
 	int iec_send_timer = 0;
 	while (running)
 	{
-		iec104_send_changed_data(iec104_server.server, &iec104_server, cfg_prior_hight);
-		if (iec_send_timer == iec104_server.iec104_send_rate)
+		iec104_send_changed_data(iec104_server, cfg_prior_hight);
+		if (iec_send_timer == iec104_server->iec104_send_rate)
 		{
-			iec104_send_changed_data(iec104_server.server, &iec104_server, cfg_prior_low);
-			iec104_send_moxa_dio( iec104_server.server);
+			iec104_send_changed_data(iec104_server, cfg_prior_low);
+			iec104_send_moxa_dio( iec104_server->server);
 			iec_send_timer = 0;
 		}
 		iec_send_timer++;
@@ -152,10 +138,15 @@ int main(int argc, char *argv[])
 	}
 
 
-	iec104_server_stop( &iec104_server);
+	iec104_server_stop( iec104_server);
 	slog_info( "Stop iec104 server");
 
 
+	for (int i = 0; i < config.num_ports; i++)	// Serial ports num
+	{
+		SerialPort_destroy(config.virt_port[i].serial_port);
+	}
+	free(config.virt_port);
 
 
 	slog_warn( "Stop programm. \n");
