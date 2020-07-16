@@ -54,12 +54,12 @@ int main(int argc, char *argv[])
 	slog_config_set(&pCfg);
 
 
-	// start modbus master
+
 	for (uint8_t i = 0; i < config.num_ports; i++)
 	{
 		switch (config.virt_port[i].protocol)
 		{
-			case cfg_modbus_rtu_m:
+			case cfg_modbus_rtu_m:		// start modbus master
 			{
 				if (Modbus_Init(config.virt_port[i].serial_port, (Modbus_Master*) config.virt_port[i].protocol_ptr, mb_debug ) == 0)
 				{

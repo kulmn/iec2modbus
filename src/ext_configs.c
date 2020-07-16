@@ -421,34 +421,37 @@ bool parse_slave_iec104_config(struct json_object *parsed_json, iec104_slave *ie
 bool parse_slave_modbus_config(struct json_object *parsed_json,Modbus_Slave_TypeDef *mb_slave )
 {
 	struct json_object *read_cmd_json=NULL, *write_cmd_json=NULL, *cur_cmd=NULL;
+	modbus_command *cmd_ptr = NULL;
 
 	json_object_object_get_ex(parsed_json, "read_commands", &read_cmd_json );
 	int read_cmd_num = json_object_array_length(read_cmd_json );
-	mb_slave->mb_read_cmd_num =  read_cmd_num;
 
-	mb_slave->mb_read_cmds = (modbus_command*) malloc(mb_slave->mb_read_cmd_num * sizeof(modbus_command) );
-
-	for (uint8_t i = 0; i < mb_slave->mb_read_cmd_num; i++)
+	mb_slave->mb_read_cmd_num =  0;
+	mb_slave->mb_read_cmds = NULL;
+	for (uint8_t i = 0; i < read_cmd_num; i++)
 	{
+		cmd_ptr = mb_add_slave_rd_cmd( mb_slave );
 		cur_cmd = json_object_array_get_idx(read_cmd_json, i );
-		if ( ! parse_modbus_read_cmd( cur_cmd, &mb_slave->mb_read_cmds[i]) )
+		if ( ! parse_modbus_read_cmd( cur_cmd, cmd_ptr ))
 		{
 			slog_error( "Parsing read commands failed.");
 			return false;
 		}
 	}
 
+
 	json_object_object_get_ex(parsed_json, "write_commands", &write_cmd_json );
 	int write_cmd_num = json_object_array_length(write_cmd_json );
 
-	mb_slave->mb_write_cmd_num = write_cmd_num;
-	mb_slave->mb_write_cmds = (modbus_command*) malloc(mb_slave->mb_write_cmd_num * sizeof(modbus_command) );
-	for (int i = 0; i < mb_slave->mb_write_cmd_num; i++)
+	mb_slave->mb_write_cmd_num =  0;
+	mb_slave->mb_write_cmds = NULL;
+	for (uint8_t i = 0; i < write_cmd_num; i++)
 	{
+		cmd_ptr = mb_add_slave_wr_cmd( mb_slave );
 		cur_cmd = json_object_array_get_idx(write_cmd_json, i );
-		if ( ! parse_modbus_write_cmd( cur_cmd, &mb_slave->mb_write_cmds[i]) )
+		if ( ! parse_modbus_write_cmd( cur_cmd, cmd_ptr ))
 		{
-			slog_error( "Parsing write commands failed.");
+			slog_error( "Parsing read commands failed.");
 			return false;
 		}
 	}

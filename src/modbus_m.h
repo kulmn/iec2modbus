@@ -54,6 +54,8 @@ typedef struct  {
 }Modbus_Master;
 
 Modbus_Master *Modbus_create(void);
+modbus_command* mb_add_slave_rd_cmd( Modbus_Slave_TypeDef *slave );
+modbus_command* mb_add_slave_wr_cmd( Modbus_Slave_TypeDef *slave );
 int Modbus_Init(SerialPort port, Modbus_Master *master, bool debug);
 void Modbus_Thread_Start(Modbus_Master *master);
 void Modbus_Thread_Stop(Modbus_Master *master);

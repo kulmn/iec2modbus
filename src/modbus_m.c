@@ -22,6 +22,37 @@
 
 
 
+modbus_command* mb_add_slave_rd_cmd( Modbus_Slave_TypeDef *slave )
+{
+	modbus_command *new_ptr = NULL;
+	uint8_t cmd_num = slave->mb_read_cmd_num++;
+
+	new_ptr = (modbus_command*) malloc(slave->mb_read_cmd_num * sizeof(modbus_command) );		//FIXME add malloc error
+	for(int i=0; i< cmd_num; i++)
+		new_ptr[i] = slave->mb_read_cmds[i];
+	if (slave->mb_read_cmds != NULL)
+		free(slave->mb_read_cmds);
+	slave->mb_read_cmds = new_ptr;
+
+	return &slave->mb_read_cmds[slave->mb_read_cmd_num-1];
+}
+
+modbus_command* mb_add_slave_wr_cmd( Modbus_Slave_TypeDef *slave )
+{
+	modbus_command *new_ptr = NULL;
+	uint8_t cmd_num = slave->mb_write_cmd_num++;
+
+	new_ptr = (modbus_command*) malloc(slave->mb_write_cmd_num * sizeof(modbus_command) );		//FIXME add malloc error
+	for(int i=0; i< cmd_num; i++)
+		new_ptr[i] = slave->mb_write_cmds[i];
+	if (slave->mb_write_cmds != NULL)
+		free(slave->mb_write_cmds);
+	slave->mb_write_cmds = new_ptr;
+
+	return &slave->mb_write_cmds[slave->mb_write_cmd_num-1];
+}
+
+
 
 int modbus_write(modbus_t *mb_ptr, Modbus_Slave_TypeDef *slave)	//FIXME ALL
 {
