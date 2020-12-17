@@ -1,7 +1,8 @@
 ## Modbus RTU to iec 60870-5-104.
 
 iec2modbus is open-source Modbus RTU (serial) to IEC 60870-5-104 (TCP) gateway for linux system.
-
+Based on [lib60870-C](https://github.com/mz-automation/lib60870), [libmodbus](https://github.com/stephane/libmodbus), [json-c](https://github.com/json-c/json-c), [slog](https://github.com/kala13x/slog).
+Modbus RTU run as master and iec104 as slave (server).
 
 Features:
 
@@ -12,9 +13,14 @@ Features:
 
 
 
-Modbus RTU run as master and iec104 as slave (
- 
-##### Based on [lib60870-C](https://github.com/mz-automation/lib60870), [libmodbus](https://github.com/stephane/libmodbus), [json-c](https://github.com/json-c/json-c), [slog](https://github.com/kala13x/slog),
+Installation instructions:
+----------------------------
 
-#### config.json file format
-
+```
+$ git clone https://github.com/3cky/mbusd.git mbusd.git
+$ cd mbusd.git
+$ mkdir -p build && cd build
+$ cmake -DCMAKE_INSTALL_PREFIX=/usr ..
+$ make
+$ sudo make install
+```
