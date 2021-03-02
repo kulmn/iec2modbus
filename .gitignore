@@ -3,7 +3,9 @@
 /arm/
 /arm_v6/
 /arm_v7/
-/x86_64/
+/x86_64/*
+!/x86_64/makefile
+!/x86_64/*.mk
 /rasperberry_pi/
 /orange_pi/
 /logs/
@@ -12,3 +14,4 @@
 /irz_router/
 /irz_ru41w/
 /irz_ru21/
+/x86_64/
