@@ -12,15 +12,3 @@ Features:
     Multi-serial - working with multiple serial buses at the same time
 
 
-
-Installation instructions:
-----------------------------
-
-```
-$ git clone https://github.com/3cky/mbusd.git mbusd.git
-$ cd mbusd.git
-$ mkdir -p build && cd build
-$ cmake -DCMAKE_INSTALL_PREFIX=/usr ..
-$ make
-$ sudo make install
-```
