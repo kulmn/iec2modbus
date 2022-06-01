@@ -49,7 +49,7 @@ static SlogTag g_SlogTags[] =
     { 1, "LIVE", CLR_NORMAL },
     { 2, "INFO", CLR_GREEN },
     { 3, "WARN", CLR_YELLOW },
-    { 4, "DEBUG", CLR_BLUE },
+    { 4, "DEBUG", CLR_NAGENTA },
     { 5, "ERROR", CLR_RED},
     { 6, "FATAL", CLR_RED },
     { 7, "PANIC", CLR_WHITE }

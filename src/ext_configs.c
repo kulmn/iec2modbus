@@ -459,6 +459,24 @@ bool parse_slave_modbus_config(struct json_object *parsed_json,Modbus_Slave_Type
 	return true;
 }
 
+/******************* Set same ASDU address for all modbus devices *********************************************************/
+void recalculate_iec104_addr(iec104_server *iec104_server, uint16_t set_asdu)
+{
+	for (int i = 0; i < iec104_server->iec104_slave_num ; i++)
+	{
+		for (int j = 0; j < iec104_server->iec104_slave[i].iec104_read_cmd_num; j++)
+		{
+			iec104_server->iec104_slave[i].iec104_read_cmds[j].iec_ioa_addr |= (iec104_server->iec104_slave[i].iec_asdu_addr << 12);
+			slog_debug( "slave: %d , read_cmd: %d, addr: %d ", i, j, iec104_server->iec104_slave[i].iec104_read_cmds[j].iec_ioa_addr);
+		}
+
+		for (int j = 0; j < iec104_server->iec104_slave[i].iec104_write_cmd_num; j++)
+			iec104_server->iec104_slave[i].iec104_write_cmds[j].iec_ioa_addr |= (iec104_server->iec104_slave[i].iec_asdu_addr << 12);
+
+		iec104_server->iec104_slave[i].iec_asdu_addr = set_asdu;
+		slog_debug( "Set ASDU address : %d", set_asdu);
+	}
+}
 
 bool read_config_file(const char *filename,Transl_Config_TypeDef *config ,iec104_server *iec104_server)
 {
@@ -468,6 +486,7 @@ bool read_config_file(const char *filename,Transl_Config_TypeDef *config ,iec104
 	struct json_object *tmp_json=NULL;
 	const char *str;
 	size_t tmp;
+	uint16_t set_asdu_addr=0;
 
 	slog_info( "Read main config file: '%s' ", filename);
 	if (!read_json_file(filename,&parsed_json))
@@ -488,6 +507,10 @@ bool read_config_file(const char *filename,Transl_Config_TypeDef *config ,iec104
 		config->log_level = SL_INFO;
 		slog_warn("Wrong log_level: %s, use default.", str );
 	}
+
+	// parse iec104 ASDU address
+	if (json_object_object_get_ex(parsed_json, "asdu_address", &tmp_json ))
+		set_asdu_addr = json_object_get_int(tmp_json);
 
 	// parse iec104_send_rate
 	json_object_object_get_ex(parsed_json, "iec104_send_rate_s", &tmp_json );
@@ -606,8 +629,12 @@ bool read_config_file(const char *filename,Transl_Config_TypeDef *config ,iec104
 			iec104_slave_cnt++;
 		}
 	}
-
 	json_object_put(parsed_json);	// free
+
+	if (set_asdu_addr != 0)			// Set same ASDU address for all modbus devices
+		recalculate_iec104_addr(iec104_server, set_asdu_addr);
+
+
 	slog_info( "Config file: '%s' successful read", filename);
 	return true;
 }

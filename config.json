@@ -1,4 +1,5 @@
 {	"log_level": "debug",				// debug, info, warning, error
+	"asdu_address": 10,
 	"iec104_send_rate_s": 10,
 	"serial_ports": [
 		{
