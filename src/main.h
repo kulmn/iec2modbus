@@ -9,7 +9,7 @@
 #define MAIN_H_
 
 #define VERSION_MAJOR		0
-#define VERSION_MINOR	4
+#define VERSION_MINOR	5
 
 
 #ifdef MOXA_UC8410
