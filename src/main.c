@@ -104,7 +104,7 @@ int main(int argc, char *argv[])
 		if (iec_send_timer == iec104_server->iec104_send_rate)
 		{
 			iec104_send_changed_data(iec104_server, cfg_prior_low);
-			iec104_send_dio( iec104_server->server);
+			iec104_send_dio( iec104_server->server, config.set_asdu_addr);
 			iec_send_timer = 0;
 		}
 		iec_send_timer++;

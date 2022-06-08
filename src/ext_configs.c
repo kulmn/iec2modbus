@@ -486,7 +486,7 @@ bool read_config_file(const char *filename,Transl_Config_TypeDef *config ,iec104
 	struct json_object *tmp_json=NULL;
 	const char *str;
 	size_t tmp;
-	uint16_t set_asdu_addr=0;
+
 
 	slog_info( "Read main config file: '%s' ", filename);
 	if (!read_json_file(filename,&parsed_json))
@@ -509,8 +509,9 @@ bool read_config_file(const char *filename,Transl_Config_TypeDef *config ,iec104
 	}
 
 	// parse iec104 ASDU address
+	config->set_asdu_addr = 0;
 	if (json_object_object_get_ex(parsed_json, "asdu_address", &tmp_json ))
-		set_asdu_addr = json_object_get_int(tmp_json);
+		config->set_asdu_addr = json_object_get_int(tmp_json);;
 
 	// parse iec104_send_rate
 	json_object_object_get_ex(parsed_json, "iec104_send_rate_s", &tmp_json );
@@ -631,8 +632,8 @@ bool read_config_file(const char *filename,Transl_Config_TypeDef *config ,iec104
 	}
 	json_object_put(parsed_json);	// free
 
-	if (set_asdu_addr != 0)			// Set same ASDU address for all modbus devices
-		recalculate_iec104_addr(iec104_server, set_asdu_addr);
+	if (config->set_asdu_addr != 0)			// Set same ASDU address for all modbus devices
+		recalculate_iec104_addr(iec104_server, config->set_asdu_addr);
 
 
 	slog_info( "Config file: '%s' successful read", filename);

@@ -66,6 +66,7 @@ typedef struct  {
 
 typedef struct  {
 	uint8_t						log_level;
+	uint16_t						set_asdu_addr;
 	Virt_Port					*virt_port;
 	uint8_t						num_ports;
 } Transl_Config_TypeDef;

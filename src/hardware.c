@@ -32,7 +32,7 @@ void buzzer_on(uint16_t duration)
 #endif
 }
 
-int iec104_send_dio(CS104_Slave slave)
+int iec104_send_dio(CS104_Slave slave, uint16_t asdu_addr)
 {
 #ifdef MOXA_UC8410
 	CS101_AppLayerParameters alParams;
@@ -40,7 +40,7 @@ int iec104_send_dio(CS104_Slave slave)
 	alParams = CS104_Slave_getAppLayerParameters(slave );
 	InformationObject io=NULL;
 
-	CS101_ASDU newAsdu = CS101_ASDU_create(alParams, false, CS101_COT_SPONTANEOUS, 0, 255, false, false );
+	CS101_ASDU newAsdu = CS101_ASDU_create(alParams, false, CS101_COT_SPONTANEOUS, 0, asdu_addr, false, false );
 	int state=0;
 
 	for (int i = 0; i < 4; i++)
