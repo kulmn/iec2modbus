@@ -13,7 +13,7 @@
 
 #include "cs104_slave.h"
 #include "hal_time.h"
-#include "moxa_dev.h"
+#include "hardware.h"
 #include "memory.h"
 
 #define MAX_CMD_CNT		4

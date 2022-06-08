@@ -12,10 +12,6 @@
 #define VERSION_MINOR	5
 
 
-#ifdef MOXA_UC8410
-#include <moxadevice.h>
-#endif
-
 
 #include <features.h>
 
@@ -35,7 +31,7 @@
 #include "memory.h"
 #include "slog.h"
 
-#include "moxa_dev.h"
+#include "hardware.h"
 
 
 

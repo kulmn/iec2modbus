@@ -1,9 +1,10 @@
 /*
- * moxa_dev.c
+ * hardware.c
  *
- *  Created on: 16 июн. 2020 г.
- *      Author: kulish_y
+ *  Created on: 8 июн. 2022 г.
+ *      Author: yura
  */
+
 
 #include <stdlib.h>
 #include <stdbool.h>
@@ -18,18 +19,22 @@
 #include <sys/kd.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
+#endif
 
-void moxa_buzzer(uint16_t duration)
+void buzzer_on(uint16_t duration)
 {
+#ifdef MOXA_UC8410
 	uint16_t lw_freq = 100;
 	unsigned int arg = ( (duration<<16) + lw_freq );
 	int fd = open("/dev/console", O_RDWR);
 	ioctl(fd, KDMKTONE, arg);
 	close(fd);
+#endif
 }
 
-int iec104_send_moxa_dio(CS104_Slave slave)
+int iec104_send_dio(CS104_Slave slave)
 {
+#ifdef MOXA_UC8410
 	CS101_AppLayerParameters alParams;
 	/* get the connection parameters - we need them to create correct ASDUs */
 	alParams = CS104_Slave_getAppLayerParameters(slave );
@@ -50,12 +55,17 @@ int iec104_send_moxa_dio(CS104_Slave slave)
 	}
 	CS104_Slave_enqueueASDU(slave, newAsdu );
 	CS101_ASDU_destroy(newAsdu );
+#endif
+
+#ifdef IRZ_RU21
+#endif
 	return 0;
 }
 
 
 bool iec104_moxa_rcv_asdu(IMasterConnection connection, CS101_ASDU asdu)
 {
+#ifdef MOXA_UC8410
 	TypeID type_id = CS101_ASDU_getTypeID(asdu );
 	uint8_t common_addr = CS101_ASDU_getCA(asdu );
 
@@ -77,26 +87,10 @@ bool iec104_moxa_rcv_asdu(IMasterConnection connection, CS101_ASDU asdu)
 		IMasterConnection_sendASDU(connection, asdu );
 		return true;
 	}
-
-	return false;
-}
-
-
-#else
-void moxa_buzzer(uint16_t duration)
-{
-
-}
-
-int iec104_send_moxa_dio(CS104_Slave slave)
-{
-	return 0;
-}
-
-bool iec104_moxa_rcv_asdu(IMasterConnection connection, CS101_ASDU asdu)
-{
-	return false;
-}
 #endif
 
+#ifdef IRZ_RU21
+#endif
+	return false;
+}
 

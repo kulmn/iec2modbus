@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
 	iec104_server*			iec104_server;
 
 
-	moxa_buzzer(100);
+	buzzer_on(100);
 	bool mb_debug = false, iec_debug = false;
 	if (argc>1)
 	{
@@ -95,7 +95,7 @@ int main(int argc, char *argv[])
 	slog_info( "Start iec104 server.");
 
 
-	moxa_buzzer(500);
+	buzzer_on(500);
 
 	int iec_send_timer = 0;
 	while (running)
@@ -104,7 +104,7 @@ int main(int argc, char *argv[])
 		if (iec_send_timer == iec104_server->iec104_send_rate)
 		{
 			iec104_send_changed_data(iec104_server, cfg_prior_low);
-			iec104_send_moxa_dio( iec104_server->server);
+			iec104_send_dio( iec104_server->server);
 			iec_send_timer = 0;
 		}
 		iec_send_timer++;
