@@ -36,6 +36,7 @@ int main(int argc, char *argv[])
 	slog_init("logs/iec2modbus", NULL, SL_LIVE, SL_LIVE);
 	slog_info( "Start  Version %d.%d build %s, %s.",VERSION_MAJOR, VERSION_MINOR,  __DATE__, __TIME__);
 
+	init_hardw_dio();
 
 	// iec104 server create and init
 	iec104_server = iec104_server_init( iec_debug);
