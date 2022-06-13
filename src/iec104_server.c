@@ -301,7 +301,9 @@ int iec104_send_changed_data( iec104_server *config, cfg_iec_prior priority)
 			data_state mem_state = config->iec104_slave[j].iec104_read_cmds[x].value->mem_state;
 			cfg_iec_prior iec_priority = config->iec104_slave[j].iec104_read_cmds[x].add_params.priority;
 
-			if (((mem_state == mem_chg) && iec_priority == priority && priority == cfg_prior_hight) || (mem_state != mem_init && priority == cfg_prior_low))
+			if (  ((mem_state == mem_chg) && priority == cfg_prior_hight)					// changed data
+					|| ((mem_state != mem_init) && iec_priority == cfg_prior_hight)		// cfg_prior_hight in conf file
+					|| (mem_state != mem_init && priority == cfg_prior_low)  )			// all data
 			{
 				newAsdu = CS101_ASDU_create(alParams, false, CS101_COT_SPONTANEOUS, 0, ca_addr, false, false );
 				if (iec104_create_asdu(&config->iec104_slave[j].iec104_read_cmds[x], newAsdu ) == 0)
