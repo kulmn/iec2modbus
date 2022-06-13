@@ -17,29 +17,13 @@
 #include "iec104_server.h"
 
 
-
 #ifdef MOXA_UC8410
 #include <moxadevice.h>
 #include <sys/kd.h>
 #include <sys/ioctl.h>
 #endif
 
-#ifdef IRZ_RU21
-#include <string.h>
-#endif
 
-#ifdef X86_64
-#include <string.h>
-
-#define DIO_HIGH		1 // the DIO data is high
-#define DIO_LOW			0 // the DIO data is low
-
-#define GPIO_PATH			"./sys/class/gpio/"
-#define GPIO_PREFIX		"gpio"
-#define DIO_NUM			7
-
-int get_din_state(int diport, int *state);
-#endif
 
 void buzzer_on(uint16_t duration)
 {
@@ -52,7 +36,7 @@ void buzzer_on(uint16_t duration)
 #endif
 }
 
-
+/*
 int init_hardw_dio(void)
 {
 #if	defined (X86_64) || defined (IRZ_RU21)
@@ -63,7 +47,6 @@ int init_hardw_dio(void)
 		char numb[8];
 		snprintf(numb, 4, "%d", i);
 		strcpy(filename, GPIO_PATH);
-		strcat(filename, GPIO_PREFIX);
 		strcat(filename, numb);
 		strcat(filename, "/direction");
 
@@ -79,15 +62,16 @@ int init_hardw_dio(void)
 			slog_warn("Error writing to file %s ", filename );
 			return 1;
 		}
+		close(fd);
 	}
 #endif
 	return 0;
 }
-
+*/
 
 int iec104_send_dio(CS104_Slave slave, uint16_t asdu_addr)
 {
-#ifdef MOXA_UC8410
+#if defined (MOXA_UC8410) || defined (IRZ_RU21) || defined (X86_64)
 	CS101_AppLayerParameters alParams;
 	/* get the connection parameters - we need them to create correct ASDUs */
 	alParams = CS104_Slave_getAppLayerParameters(slave );
@@ -96,13 +80,13 @@ int iec104_send_dio(CS104_Slave slave, uint16_t asdu_addr)
 	CS101_ASDU newAsdu = CS101_ASDU_create(alParams, false, CS101_COT_SPONTANEOUS, 0, asdu_addr, false, false );
 	int state=0;
 
-	for (int i = 0; i < 4; i++)
+	for (int i = 0; i < DIO_NUM; i++)
 	{
 		bool value;
 		get_din_state(i, &state );
 		if (state == DIO_HIGH) value = true;
 		else value = false;
-		io = (InformationObject) SinglePointInformation_create(NULL, i, value, IEC60870_QUALITY_GOOD );
+		io = (InformationObject) SinglePointInformation_create(NULL, i+1, value, IEC60870_QUALITY_GOOD );
 		CS101_ASDU_addInformationObject(newAsdu, io );
 		InformationObject_destroy(io );
 	}
@@ -110,32 +94,6 @@ int iec104_send_dio(CS104_Slave slave, uint16_t asdu_addr)
 	CS101_ASDU_destroy(newAsdu );
 #endif
 
-#ifdef IRZ_RU21
-#endif
-
-#ifdef X86_64
-	CS101_AppLayerParameters alParams;
-	/* get the connection parameters - we need them to create correct ASDUs */
-	alParams = CS104_Slave_getAppLayerParameters(slave );
-	InformationObject io=NULL;
-
-	CS101_ASDU newAsdu = CS101_ASDU_create(alParams, false, CS101_COT_SPONTANEOUS, 0, asdu_addr, false, false );
-	int state=0;
-	for (int i = 0; i < 4; i++)
-	{
-		bool value;
-		get_din_state(i, &state );
-		if (state == DIO_HIGH) value = true;
-		else value = false;
-		value = true;
-		io = (InformationObject) SinglePointInformation_create(NULL, i, value, IEC60870_QUALITY_GOOD );
-		CS101_ASDU_addInformationObject(newAsdu, io );
-		InformationObject_destroy(io );
-	}
-	CS104_Slave_enqueueASDU(slave, newAsdu );
-	CS101_ASDU_destroy(newAsdu );
-
-#endif
 	return 0;
 }
 
@@ -143,24 +101,35 @@ int iec104_send_dio(CS104_Slave slave, uint16_t asdu_addr)
 int get_din_state(int diport, int *state)
 {
 	char filename[64];
-
 	char numb[8];
-	snprintf(numb, 4, "%d", diport);
-	strcpy(filename, GPIO_PATH);
-	strcat(filename, GPIO_PREFIX);
-	strcat(filename, numb);
-	strcat(filename, "/value");
 
-	slog_warn("read file %s ", filename );
-/*
-	int fd = open(filename, O_WRONLY );
+	uint8_t dio_num = diport+1;
+	snprintf(numb, 4, "%d", dio_num );
+	strcpy(filename, GPIO_PATH );
+	strcat(filename, numb );
+	strcat(filename, "/value" );
+
+	int fd = open(filename, O_RDONLY );
 	if (fd == -1)
 	{
 		slog_warn("Unable to open file %s ", filename );
 		return 1;
 	}
-*/
-	*state = true;
+
+	char buf[8];
+	int num_rd = read(fd, buf, 4 );
+	if (num_rd == -1)
+	{
+		slog_warn("Unable to read file %s ", filename );
+		return 1;
+	}
+
+	close(fd);
+
+	int value = strtol(buf, NULL, 10 );
+	if (value) *state = DIO_HIGH;
+	else *state = DIO_LOW;
+
 	return 0;
 }
 #endif
