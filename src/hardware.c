@@ -24,6 +24,10 @@
 #endif
 
 
+#if defined (X86_64)
+//static const uint8_t gpio_lst[] = {0,0,0,0,0,0};
+#endif
+
 
 void buzzer_on(uint16_t duration)
 {
@@ -71,7 +75,7 @@ int init_hardw_dio(void)
 
 int iec104_send_dio(CS104_Slave slave, uint16_t asdu_addr)
 {
-#if defined (MOXA_UC8410) || defined (IRZ_RU21) || defined (X86_64)
+#if defined (MOXA_UC8410) || defined (IRZ_RU21) || defined (RUT955) || defined (X86_64)
 	CS101_AppLayerParameters alParams;
 	/* get the connection parameters - we need them to create correct ASDUs */
 	alParams = CS104_Slave_getAppLayerParameters(slave );
@@ -97,13 +101,14 @@ int iec104_send_dio(CS104_Slave slave, uint16_t asdu_addr)
 	return 0;
 }
 
-#if defined (X86_64) || defined (IRZ_RU21)
+#if defined (X86_64) || defined (IRZ_RU21)  || defined (RUT955)
 int get_din_state(int diport, int *state)
 {
 	char filename[64];
 	char numb[8];
 
-	uint8_t dio_num = diport+1;
+	//uint8_t dio_num = diport+1;
+	uint8_t dio_num = gpio_lst[diport];
 	snprintf(numb, 4, "%d", dio_num );
 	strcpy(filename, GPIO_PATH );
 	strcat(filename, numb );
@@ -125,14 +130,12 @@ int get_din_state(int diport, int *state)
 	}
 
 	close(fd);
-
-	int value = strtol(buf, NULL, 10 );
-	if (value) *state = DIO_HIGH;
-	else *state = DIO_LOW;
+	*state = strtol(buf, NULL, 10 );
 
 	return 0;
 }
 #endif
+
 
 bool iec104_moxa_rcv_asdu(IMasterConnection connection, CS101_ASDU asdu)
 {
@@ -160,8 +163,6 @@ bool iec104_moxa_rcv_asdu(IMasterConnection connection, CS101_ASDU asdu)
 	}
 #endif
 
-#ifdef IRZ_RU21
-#endif
 	return false;
 }
 
